@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import DiscoveryFeed from "@/components/consumer/DiscoveryFeed";
 import { prisma } from "@/lib/prisma";
 import { deactivateExpiredBoxes } from "@/lib/cleanup";
+
+export const metadata: Metadata = {
+  title: "Kutuları Keşfet",
+  description:
+    "Yakınındaki işletmelerin bugünkü sürpriz kutularını keşfet. İndirimli fiyatlarla sipariş ver, gel-al.",
+};
 
 export default async function ConsumerPage() {
   // Run cleanup on every page load (MVP substitute for a cron job)

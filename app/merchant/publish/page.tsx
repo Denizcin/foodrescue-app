@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import QuickListBox from "@/components/merchant/QuickListBox";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Kutu Yayınla",
+  robots: { index: false, follow: false },
+};
 
 export default async function PublishPage() {
   const session = await auth();

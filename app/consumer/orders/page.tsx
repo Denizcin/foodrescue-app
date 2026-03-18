@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import WalletActiveOrder from "@/components/consumer/WalletActiveOrder";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Siparişlerim",
+  description: "Aktif ve geçmiş siparişlerini görüntüle, teslim alma kodunu al.",
+  robots: { index: false, follow: false },
+};
 
 export default async function OrdersPage() {
   const session = await auth();

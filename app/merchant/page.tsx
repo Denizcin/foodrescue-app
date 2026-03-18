@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import MerchantDashboard from "@/components/merchant/MerchantDashboard";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { deactivateExpiredBoxes } from "@/lib/cleanup";
+
+export const metadata: Metadata = {
+  title: "İşletme Paneli",
+  robots: { index: false, follow: false },
+};
 
 export default async function MerchantPage() {
   const session = await auth();
