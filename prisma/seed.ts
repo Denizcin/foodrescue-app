@@ -26,8 +26,18 @@ async function main() {
   await prisma.user.deleteMany();
 
   // --- Users ---
+  const adminPassword = await bcrypt.hash("admin123", 12);
   const merchantPassword = await bcrypt.hash("merchant123", 12);
   const consumerPassword = await bcrypt.hash("consumer123", 12);
+
+  await prisma.user.create({
+    data: {
+      name: "FoodRescue Admin",
+      email: "admin@foodrescue.com",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+    },
+  });
 
   const merchantUser = await prisma.user.create({
     data: {
@@ -269,6 +279,7 @@ async function main() {
 
   console.log("\n🎉 Seed complete!");
   console.log("\nTest credentials:");
+  console.log("  Admin:    admin@foodrescue.com / admin123");
   console.log("  Merchant: isletme@foodrescue.com / merchant123");
   console.log("  Consumer: tuketici@foodrescue.com / consumer123");
 }
