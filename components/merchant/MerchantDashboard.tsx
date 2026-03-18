@@ -4,6 +4,7 @@ import Link from "next/link";
 
 interface DashboardProps {
   businessName: string;
+  isApproved: boolean;
   activeBoxes: number;
   pendingOrders: number;
   pickedUpToday: number;
@@ -12,6 +13,7 @@ interface DashboardProps {
 
 export default function MerchantDashboard({
   businessName,
+  isApproved,
   activeBoxes,
   pendingOrders,
   pickedUpToday,
@@ -64,10 +66,19 @@ export default function MerchantDashboard({
         </p>
       </div>
 
-      {/* Free badge */}
-      <div className="rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-        🎉 Üyelik ücretsiz. Kullanım ücretsiz.
-      </div>
+      {/* Approval status */}
+      {!isApproved ? (
+        <div className="rounded-xl bg-amber-50 px-4 py-3 ring-1 ring-amber-200">
+          <p className="text-sm font-semibold text-amber-800">⏳ Hesabınız onay bekliyor</p>
+          <p className="mt-0.5 text-xs text-amber-700 leading-relaxed">
+            Ekibimiz işletmenizi inceliyor. Onaylandıktan sonra kutu yayınlayabilirsiniz.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+          🎉 Üyelik ücretsiz. Kullanım ücretsiz.
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -93,7 +104,12 @@ export default function MerchantDashboard({
         <div className="grid grid-cols-2 gap-3">
           <Link
             href="/merchant/publish"
-            className="flex flex-col items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-5 text-center text-white shadow-sm transition hover:bg-emerald-700"
+            aria-disabled={!isApproved}
+            className={`flex flex-col items-center gap-2 rounded-2xl px-4 py-5 text-center shadow-sm transition ${
+              isApproved
+                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                : "pointer-events-none bg-stone-200 text-stone-400"
+            }`}
           >
             <span className="text-3xl">➕</span>
             <span className="text-sm font-semibold">Yeni Kutu Yayınla</span>

@@ -9,6 +9,7 @@ export default async function ConsumerPage() {
   const rawBoxes = await prisma.surpriseBox.findMany({
     where: {
       pickupTimeEnd: { gt: new Date() },
+      business: { isApproved: true },   // only show boxes from approved businesses
       OR: [
         { isActive: true },
         { stockQuantity: 0 }, // sold out within window — shown with "Tükendi" overlay

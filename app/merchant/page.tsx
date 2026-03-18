@@ -2,10 +2,14 @@ import MerchantDashboard from "@/components/merchant/MerchantDashboard";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { deactivateExpiredBoxes } from "@/lib/cleanup";
 
 export default async function MerchantPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/giris");
+
+  // Deactivate expired boxes on each dashboard load — keeps merchant's own view in sync
+  await deactivateExpiredBoxes();
 
   const business = await prisma.business.findFirst({
     where: { ownerId: session.user.id, isActive: true },
@@ -42,6 +46,7 @@ export default async function MerchantPage() {
   return (
     <MerchantDashboard
       businessName={business.name}
+      isApproved={business.isApproved}
       activeBoxes={activeBoxes}
       pendingOrders={pendingOrders}
       pickedUpToday={pickedUpToday}

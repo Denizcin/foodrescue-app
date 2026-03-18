@@ -6,12 +6,16 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   const session = await auth();
   let businessName = "İşletme";
 
+  let isApproved = true; // default — banner only shown when explicitly false
   if (session?.user?.id) {
     const business = await prisma.business.findFirst({
       where: { ownerId: session.user.id, isActive: true },
-      select: { name: true },
+      select: { name: true, isApproved: true },
     });
-    if (business) businessName = business.name;
+    if (business) {
+      businessName = business.name;
+      isApproved = business.isApproved;
+    }
   }
 
   return (
@@ -27,6 +31,19 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           </span>
         </div>
       </header>
+
+      {/* Pending-approval banner — shown until admin approves the business */}
+      {!isApproved && (
+        <div className="bg-amber-50 px-4 py-3 text-center text-sm font-medium text-amber-800 ring-1 ring-amber-200">
+          ⏳ <strong>Hesabınız onay bekliyor.</strong> Ekibimiz işletmenizi inceliyor.
+          Onaylandıktan sonra kutu yayınlayabilir ve siparişleri yönetebilirsiniz.
+          Sorularınız için{" "}
+          <a href="mailto:destek@foodrescue.com.tr" className="underline hover:text-amber-900">
+            destek@foodrescue.com.tr
+          </a>{" "}
+          adresine yazabilirsiniz.
+        </div>
+      )}
 
       <div className="flex flex-1 md:overflow-hidden">
         <MerchantNav />

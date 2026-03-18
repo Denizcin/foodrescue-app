@@ -19,6 +19,25 @@ export default async function PublishPage() {
     );
   }
 
+  if (!business.isApproved) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <div className="text-5xl">⏳</div>
+        <h1 className="mt-4 text-xl font-bold text-stone-900">Onay Bekleniyor</h1>
+        <p className="mt-2 text-sm text-stone-500 leading-relaxed">
+          İşletmeniz henüz onaylanmadı. Ekibimiz başvurunuzu inceliyor.
+          Onaylandıktan sonra kutu yayınlayabileceksiniz.
+        </p>
+        <p className="mt-4 text-xs text-stone-400">
+          Sorularınız için{" "}
+          <a href="mailto:destek@foodrescue.com.tr" className="text-emerald-600 underline">
+            destek@foodrescue.com.tr
+          </a>
+        </p>
+      </div>
+    );
+  }
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
