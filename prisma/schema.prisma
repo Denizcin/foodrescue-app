@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CONSUMER
+  MERCHANT
+  ADMIN
+}
+
+enum BusinessCategory {
+  BAKERY
+  RESTAURANT
+  CAFE
+  GROCERY
+  GREENGROCER
+  MARKET
+  PATISSERIE
+  DELI
+  FLORIST
+  OTHER
+}
+
+enum BoxCategory {
+  BAKERY
+  SUSHI
+  GROCERY
+  DELI
+  CAFE
+  PREPARED_MEAL
+  PRODUCE
+  MIXED
+}
+
+enum OrderStatus {
+  PENDING
+  PICKED_UP
+  CANCELLED
+}
+
+// ─── Auth models (NextAuth / Auth.js) ────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── Core models ─────────────────────────────────────────────────────────────
+
+model User {
+  id               String               @id @default(cuid())
+  name             String
+  email            String               @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  phone            String?
+  role             UserRole             @default(CONSUMER)
+  locationLat      Float?
+  locationLng      Float?
+  impactSavedMoney Float                @default(0)
+  impactCo2        Float                @default(0)
+  impactFood       Float                @default(0)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  orders      Order[]
+  nominations BusinessNomination[]
+  accounts    Account[]
+  sessions    Session[]
+  businesses  Business[]
+}
+
+model Business {
+  id             String           @id @default(cuid())
+  ownerId        String
+  name           String
+  category       BusinessCategory
+  description    String?
+  address        String
+  locationLat    Float
+  locationLng    Float
+  operatingHours String
+  imageUrl       String?
+  phone          String?
+  isActive       Boolean          @default(true)
+  isApproved     Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  owner         User             @relation(fields: [ownerId], references: [id])
+  surpriseBoxes SurpriseBox[]
+  payouts       MerchantPayout[]
+}
+
+model SurpriseBox {
+  id              String      @id @default(cuid())
+  businessId      String
+  category        BoxCategory
+  description     String?
+  originalPrice   Float
+  discountedPrice Float
+  stockQuantity   Int
+  pickupTimeStart DateTime
+  pickupTimeEnd   DateTime
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+  orders   Order[]
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  userId           String
+  boxId            String
+  status           OrderStatus @default(PENDING)
+  pickupCode       String      @unique
+  quantity         Int         @default(1)
+  totalPrice       Float
+  paymentId        String?     // iyzico paymentId — stored after successful payment
+  paymentStatus    String?     // "SUCCESS", "FAILURE", "REFUNDED"
+  refundId         String?     // iyzico refundId — stored after refund
+  commissionRate   Float       @default(0.15)
+  commissionAmount Float?      // totalPrice * commissionRate
+  merchantAmount   Float?      // totalPrice - commissionAmount
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user User        @relation(fields: [userId], references: [id])
+  box  SurpriseBox @relation(fields: [boxId], references: [id])
+}
+
+model MerchantPayout {
+  id              String   @id @default(cuid())
+  businessId      String
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalSales      Float
+  totalCommission Float
+  netPayout       Float
+  status          String   @default("PENDING") // PENDING, PROCESSING, COMPLETED
+  createdAt       DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessNomination {
+  id                    String   @id @default(cuid())
+  userId                String?
+  nominatorName         String
+  nominatorPhone        String?
+  nominatorEmail        String?
+  nominatedBusinessName String
+  nominatedAddress      String
+  reason                String?
+  createdAt             DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
