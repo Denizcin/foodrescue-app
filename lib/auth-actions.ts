@@ -108,11 +108,24 @@ export async function loginUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  // Look up role before signing in so we can redirect to the correct portal
+  const user = await prisma.user.findUnique({
+    where: { email: email?.trim().toLowerCase() },
+    select: { role: true },
+  });
+
+  const redirectTo =
+    user?.role === "ADMIN"
+      ? "/admin"
+      : user?.role === "MERCHANT"
+      ? "/merchant"
+      : "/consumer";
+
   try {
     await signIn("credentials", {
       email: email?.trim().toLowerCase(),
       password,
-      redirectTo: "/",
+      redirectTo,
     });
   } catch (error) {
     if (error instanceof AuthError) {
