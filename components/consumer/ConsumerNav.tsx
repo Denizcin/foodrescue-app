@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/consumer",         label: "Ana Sayfa",   emoji: "🏠" },
-  { href: "/consumer/orders",  label: "Siparişlerim",emoji: "📦" },
-  { href: "/consumer/nominate",label: "Öner",        emoji: "💡" },
+  { href: "/consumer",           label: "Ana Sayfa",   emoji: "🏠" },
+  { href: "/consumer/orders",    label: "Siparişlerim",emoji: "📦" },
+  { href: "/consumer/favorites", label: "Favoriler",   emoji: "❤️" },
+  { href: "/consumer/settings",  label: "Ayarlar",     emoji: "⚙️" },
 ];
 
 export default function ConsumerNav() {

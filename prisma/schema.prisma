@@ -104,17 +104,19 @@ model User {
   role             UserRole             @default(CONSUMER)
   locationLat      Float?
   locationLng      Float?
-  impactSavedMoney Float                @default(0)
-  impactCo2        Float                @default(0)
-  impactFood       Float                @default(0)
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  impactSavedMoney        Float                @default(0)
+  impactCo2               Float                @default(0)
+  impactFood              Float                @default(0)
+  notificationPreferences Json?                // { orderEmails, newBoxAlerts, promotionalEmails }
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
 
   orders      Order[]
   nominations BusinessNomination[]
   accounts    Account[]
   sessions    Session[]
   businesses  Business[]
+  favorites   Favorite[]
 }
 
 model Business {
@@ -137,6 +139,7 @@ model Business {
   owner         User             @relation(fields: [ownerId], references: [id])
   surpriseBoxes SurpriseBox[]
   payouts       MerchantPayout[]
+  favorites     Favorite[]
 }
 
 model SurpriseBox {
@@ -190,6 +193,18 @@ model MerchantPayout {
   createdAt       DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
 }
 
 model BusinessNomination {

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { BoxCategory, BusinessCategory, SurpriseBox } from "@/lib/types";
 import CategoryBadge from "@/components/shared/CategoryBadge";
 import { useLocation } from "@/contexts/LocationContext";
 import { haversineDistance } from "@/lib/utils";
+import { toggleFavorite } from "@/lib/actions";
 
 // Leaflet requires `window` — load without SSR
 const BusinessMap = dynamic(() => import("@/components/consumer/BusinessMap"), { ssr: false });
@@ -52,15 +53,28 @@ function formatDist(km: number) {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
-export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
+export default function DiscoveryFeed({
+  boxes,
+  favoriteBusinessIds: initialFavoriteIds = [],
+  isLoggedIn = false,
+}: {
+  boxes: SurpriseBox[];
+  favoriteBusinessIds?: string[];
+  isLoggedIn?: boolean;
+}) {
   const { lat: userLat, lng: userLng, granted } = useLocation();
   const [activeFilter, setActiveFilter] = useState<FilterKey>("ALL");
   const [showMap, setShowMap] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceMax, setPriceMax] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set(initialFavoriteIds));
+  const [, startTransition] = useTransition();
 
   const trigger = TRIGGERS[new Date().getMinutes() % TRIGGERS.length];
 
-  // Annotate each box with distance from the user (or Istanbul centre fallback)
+  // Annotate each box with distance from the user
   const annotated = boxes.map((box) => {
     const bLat = box.business?.locationLat ?? 0;
     const bLng = box.business?.locationLng ?? 0;
@@ -68,7 +82,6 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
     return { box, dist };
   });
 
-  // When real location is granted (and showAll not forced), filter to DEFAULT_RADIUS_KM
   const withinRadius = granted && !showAll
     ? annotated.filter((a) => a.dist <= DEFAULT_RADIUS_KM)
     : annotated;
@@ -77,13 +90,47 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
     activeFilter === "ALL" ? true : box.business?.category === activeFilter
   );
 
-  // Sort: available first (by distance), sold-out boxes at the bottom
-  const sorted = [...categoryFiltered].sort((a, b) => {
+  const searchFiltered = searchQuery.trim()
+    ? categoryFiltered.filter(({ box }) =>
+        box.business?.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      )
+    : categoryFiltered;
+
+  const priceFiltered =
+    priceMax !== "" && !isNaN(Number(priceMax)) && Number(priceMax) > 0
+      ? searchFiltered.filter(({ box }) => box.discountedPrice <= Number(priceMax))
+      : searchFiltered;
+
+  // Sort: available first (by distance), sold-out at the bottom
+  const sorted = [...priceFiltered].sort((a, b) => {
     const aOut = a.box.stockQuantity === 0;
     const bOut = b.box.stockQuantity === 0;
     if (aOut !== bOut) return aOut ? 1 : -1;
     return a.dist - b.dist;
   });
+
+  const hasActiveFilters = searchQuery.trim() !== "" || priceMax !== "";
+
+  function handleToggleFavorite(e: React.MouseEvent, businessId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) return;
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(businessId)) next.delete(businessId); else next.add(businessId);
+      return next;
+    });
+    startTransition(async () => {
+      const result = await toggleFavorite(businessId);
+      if (!result.success) {
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(businessId)) next.delete(businessId); else next.add(businessId);
+          return next;
+        });
+      }
+    });
+  }
 
   return (
     <div className="px-4 pt-4">
@@ -91,6 +138,76 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
       <div className="mb-3 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 ring-1 ring-amber-200">
         💬 {trigger}
       </div>
+
+      {/* Search bar */}
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm">🔍</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="İşletme adı ara..."
+            className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-8 pr-3 text-sm text-stone-800 placeholder:text-stone-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+          />
+        </div>
+        <button
+          onClick={() => setShowFilters((v) => !v)}
+          className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+            showFilters || priceMax
+              ? "bg-emerald-600 text-white"
+              : "bg-white text-stone-600 ring-1 ring-stone-200 hover:ring-emerald-300"
+          }`}
+        >
+          ⚙️ Filtre
+        </button>
+      </div>
+
+      {/* Price filter panel */}
+      {showFilters && (
+        <div className="mb-3 rounded-xl bg-white p-4 ring-1 ring-stone-100 shadow-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
+            Maksimum Fiyat
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+              placeholder="Örn: 100"
+              min={0}
+              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+            />
+            <span className="shrink-0 text-sm font-semibold text-stone-500">₺</span>
+            {priceMax && (
+              <button
+                onClick={() => setPriceMax("")}
+                className="shrink-0 text-xs font-medium text-red-500 hover:text-red-600"
+              >
+                Temizle
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Active filter chips */}
+      {hasActiveFilters && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {searchQuery.trim() && (
+            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+              🔍 &quot;{searchQuery.trim()}&quot;
+              <button onClick={() => setSearchQuery("")} className="ml-1 text-emerald-500 hover:text-emerald-700">✕</button>
+            </span>
+          )}
+          {priceMax && (
+            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+              ≤ ₺{priceMax}
+              <button onClick={() => setPriceMax("")} className="ml-1 text-emerald-500 hover:text-emerald-700">✕</button>
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Location summary + map toggle */}
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -114,15 +231,11 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
       {/* Map view */}
       {showMap && (
         <div className="mb-4">
-          <BusinessMap
-            boxes={sorted.map((a) => a.box)}
-            userLat={userLat}
-            userLng={userLng}
-          />
+          <BusinessMap boxes={sorted.map((a) => a.box)} userLat={userLat} userLng={userLng} />
         </div>
       )}
 
-      {/* Category pills — list mode only */}
+      {/* Category pills */}
       {!showMap && (
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {PILLS.map((pill) => (
@@ -142,24 +255,35 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
         </div>
       )}
 
-      {/* Box cards — list mode only */}
+      {/* Box cards */}
       {!showMap && (
         <div className="flex flex-col gap-3">
           {sorted.length === 0 && (
             <div className="py-10 text-center text-stone-400 flex flex-col items-center gap-3">
               <p className="text-3xl">🔍</p>
               <p className="text-sm">
-                {granted && !showAll
+                {hasActiveFilters
+                  ? "Filtrelere uyan kutu bulunamadı."
+                  : granted && !showAll
                   ? `${DEFAULT_RADIUS_KM} km içinde kutu bulunamadı.`
                   : "Bu kategoride kutu bulunamadı."}
               </p>
-              {granted && !showAll && (
+              {hasActiveFilters ? (
                 <button
-                  onClick={() => setShowAll(true)}
-                  className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
+                  onClick={() => { setSearchQuery(""); setPriceMax(""); }}
+                  className="rounded-full border border-stone-300 px-4 py-2 text-xs font-semibold text-stone-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
                 >
-                  Tüm kutuları göster
+                  Filtreleri Temizle
                 </button>
+              ) : (
+                granted && !showAll && (
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    Tüm kutuları göster
+                  </button>
+                )
               )}
             </div>
           )}
@@ -171,11 +295,14 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
             const lowStock = !soldOut && box.stockQuantity <= 3;
             const savings = box.originalPrice - box.discountedPrice;
             const boxLabel = BOX_LABEL[box.category];
+            const businessId = box.business?.id ?? "";
+            const isFav = favoriteIds.has(businessId);
 
             return (
               <Link
                 key={box.id}
                 href={`/consumer/box/${box.id}`}
+                data-testid="box-card"
                 className={`relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-100 transition-shadow hover:shadow-md ${
                   unavailable ? "pointer-events-none opacity-50" : ""
                 }`}
@@ -189,7 +316,6 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
                 )}
 
                 <div className="p-4">
-                  {/* Top row */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-stone-900 text-sm leading-tight">
@@ -214,7 +340,6 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
                     Kutunun içeriği sürprizdir! İçindekiler günden güne değişiklik gösterebilir.
                   </p>
 
-                  {/* Price row */}
                   <div className="mt-3 flex items-center gap-2">
                     <span className="text-sm text-stone-400 line-through">₺{box.originalPrice}</span>
                     <span className="text-lg font-extrabold text-emerald-600">₺{box.discountedPrice}</span>
@@ -223,14 +348,26 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
                     </span>
                   </div>
 
-                  {/* Footer */}
                   <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
                     <span>🕐 {formatTime(box.pickupTimeStart)} – {formatTime(box.pickupTimeEnd)}</span>
-                    {lowStock ? (
-                      <span className="font-semibold text-amber-500">Son {box.stockQuantity} kutu!</span>
-                    ) : (
-                      <span className="text-emerald-600">{box.stockQuantity} kutu kaldı</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {lowStock ? (
+                        <span className="font-semibold text-amber-500">Son {box.stockQuantity} kutu!</span>
+                      ) : (
+                        <span className="text-emerald-600">{box.stockQuantity} kutu kaldı</span>
+                      )}
+                      {isLoggedIn && businessId && (
+                        <button
+                          onClick={(e) => handleToggleFavorite(e, businessId)}
+                          className={`text-lg leading-none transition-transform active:scale-90 ${
+                            isFav ? "text-red-500" : "text-stone-300 hover:text-red-400"
+                          }`}
+                          title={isFav ? "Favorilerden çıkar" : "Favorilere ekle"}
+                        >
+                          {isFav ? "❤️" : "🤍"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -257,7 +394,6 @@ export default function DiscoveryFeed({ boxes }: { boxes: SurpriseBox[] }) {
         </button>
       )}
 
-      {/* Nominate business link */}
       <Link
         href="/consumer/nominate"
         className="mt-6 mb-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50 py-3.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"

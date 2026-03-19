@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DiscoveryFeed from "@/components/consumer/DiscoveryFeed";
 import { prisma } from "@/lib/prisma";
 import { deactivateExpiredBoxes } from "@/lib/cleanup";
+import { auth } from "@/auth";
 
 export const metadata: Metadata = {
   title: "Kutuları Keşfet",
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ConsumerPage() {
-  // Run cleanup on every page load (MVP substitute for a cron job)
-  await deactivateExpiredBoxes();
+  const [session] = await Promise.all([auth(), deactivateExpiredBoxes()]);
+  const userId = session?.user?.id;
 
   const rawBoxes = await prisma.surpriseBox.findMany({
     where: {
@@ -54,5 +55,21 @@ export default async function ConsumerPage() {
       : undefined,
   }));
 
-  return <DiscoveryFeed boxes={boxes} />;
+  // Fetch user's favorite business IDs for heart icons
+  const favoriteBusinessIds = userId
+    ? (
+        await prisma.favorite.findMany({
+          where: { userId },
+          select: { businessId: true },
+        })
+      ).map((f) => f.businessId)
+    : [];
+
+  return (
+    <DiscoveryFeed
+      boxes={boxes}
+      favoriteBusinessIds={favoriteBusinessIds}
+      isLoggedIn={!!userId}
+    />
+  );
 }

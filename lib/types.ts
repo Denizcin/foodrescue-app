@@ -76,6 +76,21 @@ export interface User {
   impactSavedMoney: number;
   impactCo2: number;
   impactFood: number;
+  notificationPreferences?: {
+    orderEmails: boolean;
+    newBoxAlerts: boolean;
+    promotionalEmails: boolean;
+  } | null;
+}
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  businessId: string;
+  createdAt: string;
+  business?: Business & {
+    activeBoxes?: SurpriseBox[];
+  };
 }
 
 export interface BusinessNomination {

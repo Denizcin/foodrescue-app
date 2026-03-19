@@ -201,28 +201,100 @@ export default function WalletActiveOrder({
           </button>
 
           {pastOpen && (
-            <div className="mt-3 flex flex-col gap-2">
-              {myPast.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between rounded-xl bg-white px-4 py-3 ring-1 ring-stone-100"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-stone-700">
-                      {order.box?.business?.name ?? "İşletme"}
-                    </p>
-                    <p className="text-xs text-stone-400">{formatDate(order.createdAt)}</p>
-                    <p className="text-xs text-stone-400">
-                      {order.quantity} kutu · ₺{order.totalPrice}
-                    </p>
-                    {/* Full code visible in history */}
-                    <p className="mt-0.5 font-mono text-xs text-stone-400">
-                      Kod: {order.pickupCode}
-                    </p>
+            <div className="mt-3 flex flex-col gap-3">
+              {myPast.map((order) => {
+                const box = order.box;
+                const savings = box
+                  ? (box.originalPrice - box.discountedPrice) * order.quantity
+                  : 0;
+                const BOX_EMOJI: Record<string, string> = {
+                  BAKERY: "🥐", SUSHI: "🍣", GROCERY: "🛒", DELI: "🥩",
+                  CAFE: "☕", PREPARED_MEAL: "🍱", PRODUCE: "🥕", MIXED: "🎁",
+                };
+                const boxEmoji = box ? (BOX_EMOJI[box.category] ?? "🎁") : "🎁";
+                const steps = [
+                  { label: "Sipariş Verildi", done: true },
+                  { label: "Teslim Alındı", done: order.status === "PICKED_UP" },
+                ];
+
+                return (
+                  <div
+                    key={order.id}
+                    className="rounded-2xl bg-white p-4 ring-1 ring-stone-100 shadow-sm space-y-3"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-stone-900">
+                          {box?.business?.name ?? "İşletme"}
+                        </p>
+                        <p className="text-xs text-stone-400 mt-0.5">{box?.business?.address}</p>
+                      </div>
+                      {statusBadge(order.status)}
+                    </div>
+
+                    {/* Box info */}
+                    <div className="flex items-center gap-3 rounded-xl bg-stone-50 px-3 py-2.5">
+                      <span className="text-2xl">{boxEmoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-stone-700">
+                          Sürpriz Kutu · {order.quantity} adet
+                        </p>
+                        {box && (
+                          <p className="text-xs text-stone-400 mt-0.5">
+                            🕐 {formatTime(box.pickupTimeStart)} – {formatTime(box.pickupTimeEnd)}{" "}
+                            · {new Date(box.pickupTimeStart).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Price + savings */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-stone-900">₺{order.totalPrice}</span>
+                        {box && (
+                          <span className="text-xs text-stone-400 line-through">
+                            ₺{(box.originalPrice * order.quantity).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      {savings > 0 && (
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                          💰 ₺{savings.toFixed(2)} tasarruf
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Status timeline */}
+                    {order.status !== "CANCELLED" && (
+                      <div className="flex items-center">
+                        {steps.map((step, i) => (
+                          <div key={step.label} className="flex items-center flex-1">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${step.done ? "bg-emerald-500" : "bg-stone-200"}`}>
+                                {step.done ? "✓" : ""}
+                              </div>
+                              <p className={`mt-1 text-[10px] font-medium whitespace-nowrap ${step.done ? "text-emerald-600" : "text-stone-400"}`}>
+                                {step.label}
+                              </p>
+                            </div>
+                            {i < steps.length - 1 && (
+                              <div className={`flex-1 h-0.5 mb-4 mx-1 ${steps[i + 1].done ? "bg-emerald-400" : "bg-stone-200"}`} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Code + date */}
+                    <div className="flex items-center justify-between text-xs text-stone-400">
+                      <span>Kod: <span className="font-mono font-semibold text-stone-600">{order.pickupCode}</span></span>
+                      <span>{formatDate(order.createdAt)}</span>
+                    </div>
                   </div>
-                  {statusBadge(order.status)}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

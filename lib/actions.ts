@@ -398,3 +398,55 @@ export async function nominateBusiness(input: unknown): Promise<ActionResult> {
     return { success: false, error: ERROR_MESSAGES.GENERIC_ERROR };
   }
 }
+
+// ─── toggleFavorite ───────────────────────────────────────────────────────────
+
+export async function toggleFavorite(businessId: string): Promise<ActionResult<{ favorited: boolean }>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };
+    }
+
+    const userId = session.user.id;
+    const existing = await prisma.favorite.findUnique({
+      where: { userId_businessId: { userId, businessId } },
+    });
+
+    if (existing) {
+      await prisma.favorite.delete({ where: { id: existing.id } });
+      return { success: true, data: { favorited: false } };
+    } else {
+      await prisma.favorite.create({ data: { userId, businessId } });
+      return { success: true, data: { favorited: true } };
+    }
+  } catch (error) {
+    console.error("toggleFavorite failed:", error);
+    return { success: false, error: ERROR_MESSAGES.GENERIC_ERROR };
+  }
+}
+
+// ─── updateNotificationPreferences ───────────────────────────────────────────
+
+export async function updateNotificationPreferences(prefs: {
+  orderEmails: boolean;
+  newBoxAlerts: boolean;
+  promotionalEmails: boolean;
+}): Promise<ActionResult<null>> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { notificationPreferences: prefs },
+    });
+
+    return { success: true, data: null };
+  } catch (error) {
+    console.error("updateNotificationPreferences failed:", error);
+    return { success: false, error: ERROR_MESSAGES.GENERIC_ERROR };
+  }
+}
