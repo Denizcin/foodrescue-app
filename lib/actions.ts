@@ -28,33 +28,23 @@ function generatePickupCode(): string {
 // ─── publishBox ──────────────────────────────────────────────────────────────
 
 export async function publishBox(input: unknown): Promise<ActionResult> {
-  console.log("[publishBox] called with input:", JSON.stringify(input));
+  console.log("=== PUBLISH BOX CALLED ===");
   try {
     const session = await auth();
-    console.log("[publishBox] session userId:", session?.user?.id, "role:", session?.user?.role);
+    console.log("[publishBox] session:", session?.user?.id, session?.user?.role);
 
     if (!session?.user?.id) {
-      console.log("[publishBox] returning UNAUTHORIZED");
       return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };
     }
     if (session.user.role !== "MERCHANT" && session.user.role !== "ADMIN") {
-      console.log("[publishBox] returning FORBIDDEN, role was:", session.user.role);
       return { success: false, error: ERROR_MESSAGES.FORBIDDEN };
     }
 
-    let validated;
-    try {
-      validated = createBoxSchema.parse(input);
-      console.log("[publishBox] Zod parse OK");
-    } catch (zodErr) {
-      console.error("[publishBox] Zod parse FAILED:", zodErr);
-      throw zodErr;
-    }
+    const validated = createBoxSchema.parse(input);
 
     const business = await prisma.business.findFirst({
       where: { ownerId: session.user.id, isActive: true },
     });
-    console.log("[publishBox] business found:", business?.id ?? "null");
 
     if (!business) {
       return { success: false, error: "Aktif bir işletmeniz bulunamadı" };
@@ -72,12 +62,10 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
         pickupTimeEnd: new Date(validated.pickupTimeEnd),
       },
     });
-    console.log("[publishBox] box created:", box.id);
 
     revalidatePath("/merchant/publish");
     revalidatePath("/merchant");
 
-    console.log("[publishBox] returning success");
     return {
       success: true,
       data: {
@@ -94,16 +82,12 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
       },
     };
   } catch (error) {
-    // Duck-type check covers both direct instanceof and cross-realm bundling edge cases
     if (error instanceof z.ZodError || (error instanceof Error && "issues" in error)) {
       const zodErr = error as z.ZodError;
-      console.error("[publishBox] ZodError:", zodErr.issues);
       return { success: false, error: zodErr.issues[0]?.message ?? "Geçersiz giriş" };
     }
     const msg = error instanceof Error ? error.message : String(error);
-    console.error("[publishBox] UNCAUGHT error type:", error instanceof Error ? error.constructor.name : typeof error);
-    console.error("[publishBox] UNCAUGHT error message:", msg);
-    console.error("[publishBox] UNCAUGHT error full:", error);
+    console.error("[publishBox] error:", msg, error);
     return { success: false, error: process.env.NODE_ENV !== "production" ? msg : ERROR_MESSAGES.GENERIC_ERROR };
   }
 }
