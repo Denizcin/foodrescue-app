@@ -11,6 +11,7 @@ import {
 } from "@/lib/validations";
 import { ERROR_MESSAGES } from "@/lib/errors";
 import type { ActionResult } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 import { refundPayment } from "@/lib/payment-actions";
 import { calcCommission } from "@/lib/utils";
 import {
@@ -59,7 +60,27 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
       },
     });
 
-    return { success: true, data: box };
+    revalidatePath("/merchant/publish");
+    revalidatePath("/merchant");
+
+    // Return plain serializable object — never return Prisma Date objects directly
+    // because Next.js server-action serialization may drop them, causing client-side
+    // `new Date(undefined).toISOString()` RangeError that freezes the loading state.
+    return {
+      success: true,
+      data: {
+        id: box.id,
+        businessId: box.businessId,
+        category: box.category,
+        description: box.description ?? null,
+        originalPrice: box.originalPrice,
+        discountedPrice: box.discountedPrice,
+        stockQuantity: box.stockQuantity,
+        pickupTimeStart: box.pickupTimeStart.toISOString(),
+        pickupTimeEnd: box.pickupTimeEnd.toISOString(),
+        isActive: box.isActive,
+      },
+    };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.issues[0].message };

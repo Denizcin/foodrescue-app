@@ -143,40 +143,52 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
     setSubmitError(null);
     setLoading(true);
 
-    // datetime-local values are local time — new Date() interprets them as local
-    const result = await publishBox({
-      category: form.category,
-      description: form.description || undefined,
-      originalPrice: parseFloat(form.originalPrice),
-      discountedPrice: parseFloat(form.discountedPrice),
-      stockQuantity: parseInt(form.quantity, 10),
-      pickupTimeStart: new Date(form.pickupStart).toISOString(),
-      pickupTimeEnd: new Date(form.pickupEnd).toISOString(),
-    });
+    try {
+      // Append ":00" so the string is always "YYYY-MM-DDTHH:mm:ss" — more
+      // universally parseable across environments before .toISOString() converts
+      // it to the proper UTC ISO string the server action expects.
+      const toISO = (localDT: string) =>
+        new Date(localDT.length === 16 ? localDT + ":00" : localDT).toISOString();
 
-    setLoading(false);
+      const result = await publishBox({
+        category: form.category,
+        description: form.description || undefined,
+        originalPrice: parseFloat(form.originalPrice),
+        discountedPrice: parseFloat(form.discountedPrice),
+        stockQuantity: parseInt(form.quantity, 10),
+        pickupTimeStart: toISO(form.pickupStart),
+        pickupTimeEnd: toISO(form.pickupEnd),
+      });
 
-    if (result.success) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const box = result.data as any;
-      const newBox: SurpriseBox = {
-        id: box.id,
-        businessId: box.businessId,
-        category: box.category,
-        description: box.description ?? undefined,
-        originalPrice: box.originalPrice,
-        discountedPrice: box.discountedPrice,
-        stockQuantity: box.stockQuantity,
-        pickupTimeStart: new Date(box.pickupTimeStart).toISOString(),
-        pickupTimeEnd: new Date(box.pickupTimeEnd).toISOString(),
-        isActive: box.isActive,
-      };
-      setPublished((prev) => [newBox, ...prev]);
-      setForm(DEFAULT_FORM);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    } else {
-      setSubmitError(result.error);
+      if (result.success) {
+        // The server action now returns plain ISO strings, not Date objects,
+        // so this is safe to access directly without re-wrapping in new Date().
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const box = result.data as any;
+        const newBox: SurpriseBox = {
+          id: box.id,
+          businessId: box.businessId,
+          category: box.category,
+          description: box.description ?? undefined,
+          originalPrice: box.originalPrice,
+          discountedPrice: box.discountedPrice,
+          stockQuantity: box.stockQuantity,
+          pickupTimeStart: String(box.pickupTimeStart),
+          pickupTimeEnd: String(box.pickupTimeEnd),
+          isActive: box.isActive,
+        };
+        setPublished((prev) => [newBox, ...prev]);
+        setForm(DEFAULT_FORM);
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setSubmitError(result.error);
+      }
+    } catch (err) {
+      console.error("[QuickListBox] handleSubmit threw:", err);
+      setSubmitError("Bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.");
+    } finally {
+      setLoading(false);
     }
   }
 
