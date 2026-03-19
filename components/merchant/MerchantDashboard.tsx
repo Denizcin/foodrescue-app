@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 
+interface WeeklyDay {
+  label: string; // e.g. "Pzt"
+  orders: number;
+  revenue: number;
+}
+
 interface DashboardProps {
   businessName: string;
   isApproved: boolean;
@@ -9,6 +15,34 @@ interface DashboardProps {
   pendingOrders: number;
   pickedUpToday: number;
   foodRescuedKg: number;
+  weeklyData?: WeeklyDay[];
+}
+
+function WeeklyChart({ data }: { data: WeeklyDay[] }) {
+  const maxOrders = Math.max(...data.map((d) => d.orders), 1);
+
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100">
+      <h2 className="mb-3 text-sm font-bold text-stone-800">📈 Son 7 Günlük Siparişler</h2>
+      <div className="flex items-end gap-1.5 h-24">
+        {data.map((day) => {
+          const heightPct = (day.orders / maxOrders) * 100;
+          return (
+            <div key={day.label} className="flex flex-1 flex-col items-center gap-1">
+              <span className="text-xs font-semibold text-stone-700">{day.orders > 0 ? day.orders : ""}</span>
+              <div className="w-full rounded-t-lg bg-emerald-100 relative" style={{ height: "64px" }}>
+                <div
+                  className="absolute bottom-0 left-0 right-0 rounded-t-lg bg-emerald-500 transition-all"
+                  style={{ height: `${heightPct}%` }}
+                />
+              </div>
+              <span className="text-xs text-stone-400">{day.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function MerchantDashboard({
@@ -18,6 +52,7 @@ export default function MerchantDashboard({
   pendingOrders,
   pickedUpToday,
   foodRescuedKg,
+  weeklyData,
 }: DashboardProps) {
   const statCards = [
     {
@@ -95,6 +130,11 @@ export default function MerchantDashboard({
           </div>
         ))}
       </div>
+
+      {/* Weekly chart */}
+      {weeklyData && weeklyData.length > 0 && (
+        <WeeklyChart data={weeklyData} />
+      )}
 
       {/* Quick actions */}
       <div className="space-y-3">

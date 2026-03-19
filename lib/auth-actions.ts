@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { signIn } from "@/auth";
 import { AuthError } from "@auth/core/errors";
 import crypto from "crypto";
+import { sendEmailVerification } from "@/lib/email";
 
 // ─── Consumer kayıt ──────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ export async function registerConsumer(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -37,6 +38,20 @@ export async function registerConsumer(formData: FormData) {
       role: "CONSUMER",
     },
   });
+
+  // Send email verification
+  void (async () => {
+    try {
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await prisma.verificationToken.create({
+        data: { identifier: user.email, token, expires },
+      });
+      await sendEmailVerification({ to: user.email, name: user.name, token });
+    } catch (e) {
+      console.error("[email] verification send failed:", e);
+    }
+  })();
 
   // Kayıt sonrası otomatik giriş
   await signIn("credentials", {
@@ -94,6 +109,20 @@ export async function registerMerchant(formData: FormData) {
       isApproved: false,
     },
   });
+
+  // Send email verification for merchant owner
+  void (async () => {
+    try {
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await prisma.verificationToken.create({
+        data: { identifier: user.email, token, expires },
+      });
+      await sendEmailVerification({ to: user.email, name: user.name, token });
+    } catch (e) {
+      console.error("[email] merchant verification send failed:", e);
+    }
+  })();
 
   await signIn("credentials", {
     email: email.trim().toLowerCase(),
@@ -197,6 +226,43 @@ export async function resetPassword(formData: FormData) {
   });
 
   await prisma.passwordResetToken.delete({ where: { token } });
+
+  return { success: true };
+}
+
+// ─── E-posta doğrulama ────────────────────────────────────────────────────────
+
+export async function verifyEmail(token: string) {
+  if (!token) return { error: "Geçersiz doğrulama linki." };
+
+  const record = await prisma.verificationToken.findUnique({ where: { token } });
+  if (!record || record.expires < new Date()) {
+    return { error: "Bu link geçersiz veya süresi dolmuş. Yeni bir doğrulama e-postası isteyin." };
+  }
+
+  await prisma.user.update({
+    where: { email: record.identifier },
+    data: { emailVerified: new Date() },
+  });
+
+  await prisma.verificationToken.delete({ where: { token } });
+
+  return { success: true };
+}
+
+export async function resendVerificationEmail(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { success: true }; // don't reveal existence
+
+  if (user.emailVerified) return { error: "E-posta zaten doğrulanmış." };
+
+  // Delete old tokens
+  await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
+  await sendEmailVerification({ to: email, name: user.name, token });
 
   return { success: true };
 }

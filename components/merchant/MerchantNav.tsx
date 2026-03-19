@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation";
 import SignOutButton from "@/components/shared/SignOutButton";
 
 const navItems = [
-  { href: "/merchant",         label: "Panel",        emoji: "📊" },
-  { href: "/merchant/publish", label: "Kutu Yayınla", emoji: "➕" },
-  { href: "/merchant/orders",  label: "Siparişler",   emoji: "📋" },
+  { href: "/merchant",           label: "Panel",        emoji: "📊" },
+  { href: "/merchant/publish",   label: "Kutu Yayınla", emoji: "➕" },
+  { href: "/merchant/orders",    label: "Siparişler",   emoji: "📋" },
+  { href: "/merchant/templates", label: "Şablonlar",    emoji: "📝" },
+  { href: "/merchant/payments",  label: "Ödemeler",     emoji: "💰" },
+  { href: "/merchant/settings",  label: "Ayarlar",      emoji: "⚙️" },
 ];
 
 export default function MerchantNav() {

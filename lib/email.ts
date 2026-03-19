@@ -58,6 +58,28 @@ const BOX_LABELS: Record<string, string> = {
   CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
 };
 
+// ─── Email verification ────────────────────────────────────────────────────────
+
+export async function sendEmailVerification(p: { to: string; name: string; token: string }) {
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/email-dogrula?token=${p.token}`;
+  await dispatch({
+    to: p.to,
+    subject: "FoodRescue — E-posta adresinizi doğrulayın",
+    html: `
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1c1917;">
+  <h2 style="color:#059669;">Merhaba, ${p.name}! 👋</h2>
+  <p>Hesabınızı aktifleştirmek için aşağıdaki düğmeye tıklayın. Bu link 24 saat geçerlidir.</p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${verifyUrl}" style="background:#059669;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
+      E-postamı Doğrula →
+    </a>
+  </div>
+  <p style="font-size:12px;color:#9ca3af;">Düğme çalışmıyorsa bu linki kopyalayın:<br>${verifyUrl}</p>
+  <p style="font-size:12px;color:#9ca3af;">Bu isteği siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz.</p>
+</div>`,
+  });
+}
+
 // ─── Consumer: order confirmed ─────────────────────────────────────────────────
 
 export async function sendOrderConfirmation(p: {
