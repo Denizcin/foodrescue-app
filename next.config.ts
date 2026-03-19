@@ -12,10 +12,6 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-  // iyzipay uses dynamic require() with absolute paths which Turbopack cannot bundle.
-  // Marking it as external so Node.js loads it natively at runtime.
-  serverExternalPackages: ["iyzipay"],
-
   async headers() {
     return [
       {
