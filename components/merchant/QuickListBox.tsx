@@ -20,8 +20,8 @@ interface FormState {
   quantity: string;
   originalPrice: string;
   discountedPrice: string;
-  pickupStart: string;
-  pickupEnd: string;
+  pickupStart: string; // YYYY-MM-DDTHH:mm (local time)
+  pickupEnd: string;   // YYYY-MM-DDTHH:mm (local time)
   description: string;
 }
 
@@ -35,18 +35,39 @@ const DEFAULT_FORM: FormState = {
   description: "",
 };
 
+/** Format a Date as YYYY-MM-DDTHH:mm in the user's local timezone. */
+function toLocalDT(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** Compute min/max bounds for datetime-local inputs. */
+function getBounds() {
+  const now = new Date();
+  const min = toLocalDT(now);
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(23, 59, 0, 0);
+  const max = toLocalDT(tomorrow);
+
+  return { min, max };
+}
+
 export default function QuickListBox({ publishedBoxes }: { publishedBoxes: SurpriseBox[] }) {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [published, setPublished] = useState<SurpriseBox[]>(publishedBoxes);
   const [success, setSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { min: minDT, max: maxDT } = getBounds();
 
   function set(field: keyof FormState, value: string) {
     setErrors((e) => ({ ...e, [field]: undefined }));
     setForm((f) => {
       const next = { ...f, [field]: value };
-      // Auto-suggest 50% discount when original price changes
       if (field === "originalPrice" && value) {
         const half = (parseFloat(value) * 0.5).toFixed(2);
         if (!f.discountedPrice || f.discountedPrice === prev50(f.originalPrice)) {
@@ -79,23 +100,36 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
     if (!form.quantity || isNaN(qty) || qty < 1) {
       errs.quantity = "Adet en az 1 olmalıdır";
     }
+
     if (!form.pickupStart) {
-      errs.pickupStart = "Teslim alma başlangıcı gereklidir";
+      errs.pickupStart = "Teslim alma başlangıç tarihi ve saatini seçin";
     }
     if (!form.pickupEnd) {
-      errs.pickupEnd = "Teslim alma bitişi gereklidir";
+      errs.pickupEnd = "Teslim alma bitiş tarihi ve saatini seçin";
     }
 
     if (form.pickupStart && form.pickupEnd) {
       const now = new Date();
-      const today = now.toISOString().slice(0, 10);
-      const startDt = new Date(`${today}T${form.pickupStart}`);
-      const endDt = new Date(`${today}T${form.pickupEnd}`);
+      const startDt = new Date(form.pickupStart);
+      const endDt = new Date(form.pickupEnd);
 
-      if (endDt <= now) {
-        errs.pickupEnd = "Teslim alma bitiş saati gelecekte olmalıdır";
+      // Max allowed: tomorrow at 23:59 local time
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(23, 59, 59, 999);
+
+      if (startDt <= now) {
+        errs.pickupStart = "Başlangıç saati şu andan sonra olmalıdır";
+      }
+      if (!errs.pickupStart && startDt > tomorrow) {
+        errs.pickupStart = "En fazla yarın için kutu yayınlayabilirsiniz";
+      }
+      if (endDt <= startDt) {
+        errs.pickupEnd = "Bitiş saati başlangıç saatinden sonra olmalıdır";
       } else if (endDt.getTime() - startDt.getTime() < 30 * 60 * 1000) {
-        errs.pickupEnd = "Teslim alma süresi en az 30 dakika olmalıdır";
+        errs.pickupEnd = "Teslim alma penceresi en az 30 dakika olmalıdır";
+      } else if (endDt > tomorrow) {
+        errs.pickupEnd = "En fazla yarın için kutu yayınlayabilirsiniz";
       }
     }
 
@@ -107,17 +141,20 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
     e.preventDefault();
     if (!validate()) return;
     setSubmitError(null);
+    setLoading(true);
 
-    const today = new Date().toISOString().slice(0, 10);
+    // datetime-local values are local time — new Date() interprets them as local
     const result = await publishBox({
       category: form.category,
       description: form.description || undefined,
       originalPrice: parseFloat(form.originalPrice),
       discountedPrice: parseFloat(form.discountedPrice),
       stockQuantity: parseInt(form.quantity, 10),
-      pickupTimeStart: new Date(`${today}T${form.pickupStart}:00`).toISOString(),
-      pickupTimeEnd: new Date(`${today}T${form.pickupEnd}:00`).toISOString(),
+      pickupTimeStart: new Date(form.pickupStart).toISOString(),
+      pickupTimeEnd: new Date(form.pickupEnd).toISOString(),
     });
+
+    setLoading(false);
 
     if (result.success) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,6 +183,10 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
   const categoryLabel = (cat: BoxCategory) =>
     CATEGORY_OPTIONS.find((o) => o.value === cat)?.label ?? cat;
 
+  const inputCls =
+    "w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100";
+  const errorCls = "mt-1 text-xs text-red-500";
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div>
@@ -168,7 +209,7 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
           <select
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
-            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+            className={inputCls}
           >
             {CATEGORY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -187,10 +228,10 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
             max={50}
             value={form.quantity}
             onChange={(e) => set("quantity", e.target.value)}
-            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+            className={inputCls}
             placeholder="ör. 5"
           />
-          {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+          {errors.quantity && <p className={errorCls}>{errors.quantity}</p>}
         </div>
 
         {/* Prices */}
@@ -203,12 +244,10 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
               step={0.01}
               value={form.originalPrice}
               onChange={(e) => set("originalPrice", e.target.value)}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              className={inputCls}
               placeholder="ör. 100"
             />
-            {errors.originalPrice && (
-              <p className="mt-1 text-xs text-red-500">{errors.originalPrice}</p>
-            )}
+            {errors.originalPrice && <p className={errorCls}>{errors.originalPrice}</p>}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">İndirimli Fiyat (₺)</label>
@@ -218,44 +257,44 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
               step={0.01}
               value={form.discountedPrice}
               onChange={(e) => set("discountedPrice", e.target.value)}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              className={inputCls}
               placeholder="ör. 50"
             />
-            {errors.discountedPrice && (
-              <p className="mt-1 text-xs text-red-500">{errors.discountedPrice}</p>
-            )}
+            {errors.discountedPrice && <p className={errorCls}>{errors.discountedPrice}</p>}
           </div>
         </div>
 
-        {/* Pickup times */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Pickup date+time pickers */}
+        <div className="space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">
               Teslim Alma Başlangıcı
+              <span className="ml-1 text-xs font-normal text-stone-400">(bugün veya yarın)</span>
             </label>
             <input
-              type="time"
+              type="datetime-local"
               value={form.pickupStart}
+              min={minDT}
+              max={maxDT}
               onChange={(e) => set("pickupStart", e.target.value)}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              className={inputCls}
             />
-            {errors.pickupStart && (
-              <p className="mt-1 text-xs text-red-500">{errors.pickupStart}</p>
-            )}
+            {errors.pickupStart && <p className={errorCls}>{errors.pickupStart}</p>}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">
               Teslim Alma Bitişi
+              <span className="ml-1 text-xs font-normal text-stone-400">(en az 30 dk sonra)</span>
             </label>
             <input
-              type="time"
+              type="datetime-local"
               value={form.pickupEnd}
+              min={form.pickupStart || minDT}
+              max={maxDT}
               onChange={(e) => set("pickupEnd", e.target.value)}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              className={inputCls}
             />
-            {errors.pickupEnd && (
-              <p className="mt-1 text-xs text-red-500">{errors.pickupEnd}</p>
-            )}
+            {errors.pickupEnd && <p className={errorCls}>{errors.pickupEnd}</p>}
           </div>
         </div>
 
@@ -281,9 +320,10 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98]"
+          disabled={loading}
+          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50"
         >
-          Kutuyu Yayınla
+          {loading ? "Yayınlanıyor..." : "Kutuyu Yayınla"}
         </button>
 
         <p className="text-center text-xs text-stone-400">
@@ -291,33 +331,40 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
         </p>
       </form>
 
-      {/* Today's published boxes */}
+      {/* Published boxes list */}
       {published.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
-            Bugün Yayınlanan Kutular
+            Yayınlanan Kutular
           </h2>
           <div className="space-y-2">
-            {published.map((box) => (
-              <div
-                key={box.id}
-                className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-100"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-stone-800">
-                    {categoryLabel(box.category)}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    {box.pickupTimeStart.slice(11, 16)} – {box.pickupTimeEnd.slice(11, 16)} ·{" "}
-                    {box.stockQuantity} adet
-                  </p>
+            {published.map((box) => {
+              const startStr = new Date(box.pickupTimeStart).toLocaleString("tr-TR", {
+                day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+              });
+              const endStr = new Date(box.pickupTimeEnd).toLocaleString("tr-TR", {
+                hour: "2-digit", minute: "2-digit",
+              });
+              return (
+                <div
+                  key={box.id}
+                  className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-100"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-stone-800">
+                      {categoryLabel(box.category)}
+                    </p>
+                    <p className="text-xs text-stone-500">
+                      {startStr} – {endStr} · {box.stockQuantity} adet
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-emerald-600">₺{box.discountedPrice.toFixed(2)}</p>
+                    <p className="text-xs text-stone-400 line-through">₺{box.originalPrice.toFixed(2)}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-emerald-600">₺{box.discountedPrice.toFixed(2)}</p>
-                  <p className="text-xs text-stone-400 line-through">₺{box.originalPrice.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
