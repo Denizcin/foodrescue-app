@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import MerchantNav from "@/components/merchant/MerchantNav";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ConsumerNav from "@/components/consumer/ConsumerNav";
 import LocationHeader from "@/components/consumer/LocationHeader";
 import SignOutButton from "@/components/shared/SignOutButton";
