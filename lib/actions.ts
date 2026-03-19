@@ -28,20 +28,33 @@ function generatePickupCode(): string {
 // ─── publishBox ──────────────────────────────────────────────────────────────
 
 export async function publishBox(input: unknown): Promise<ActionResult> {
+  console.log("[publishBox] called with input:", JSON.stringify(input));
   try {
     const session = await auth();
+    console.log("[publishBox] session userId:", session?.user?.id, "role:", session?.user?.role);
+
     if (!session?.user?.id) {
+      console.log("[publishBox] returning UNAUTHORIZED");
       return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };
     }
     if (session.user.role !== "MERCHANT" && session.user.role !== "ADMIN") {
+      console.log("[publishBox] returning FORBIDDEN, role was:", session.user.role);
       return { success: false, error: ERROR_MESSAGES.FORBIDDEN };
     }
 
-    const validated = createBoxSchema.parse(input);
+    let validated;
+    try {
+      validated = createBoxSchema.parse(input);
+      console.log("[publishBox] Zod parse OK");
+    } catch (zodErr) {
+      console.error("[publishBox] Zod parse FAILED:", zodErr);
+      throw zodErr;
+    }
 
     const business = await prisma.business.findFirst({
       where: { ownerId: session.user.id, isActive: true },
     });
+    console.log("[publishBox] business found:", business?.id ?? "null");
 
     if (!business) {
       return { success: false, error: "Aktif bir işletmeniz bulunamadı" };
@@ -59,13 +72,12 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
         pickupTimeEnd: new Date(validated.pickupTimeEnd),
       },
     });
+    console.log("[publishBox] box created:", box.id);
 
     revalidatePath("/merchant/publish");
     revalidatePath("/merchant");
 
-    // Return plain serializable object — never return Prisma Date objects directly
-    // because Next.js server-action serialization may drop them, causing client-side
-    // `new Date(undefined).toISOString()` RangeError that freezes the loading state.
+    console.log("[publishBox] returning success");
     return {
       success: true,
       data: {
@@ -83,9 +95,10 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error("[publishBox] ZodError:", error.issues);
       return { success: false, error: error.issues[0].message };
     }
-    console.error("publishBox failed:", error);
+    console.error("[publishBox] UNCAUGHT error:", error);
     return { success: false, error: ERROR_MESSAGES.GENERIC_ERROR };
   }
 }

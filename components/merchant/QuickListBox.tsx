@@ -150,7 +150,7 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
       const toISO = (localDT: string) =>
         new Date(localDT.length === 16 ? localDT + ":00" : localDT).toISOString();
 
-      const result = await publishBox({
+      const payload = {
         category: form.category,
         description: form.description || undefined,
         originalPrice: parseFloat(form.originalPrice),
@@ -158,7 +158,11 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
         stockQuantity: parseInt(form.quantity, 10),
         pickupTimeStart: toISO(form.pickupStart),
         pickupTimeEnd: toISO(form.pickupEnd),
-      });
+      };
+      console.log("[QuickListBox] calling publishBox with:", JSON.stringify(payload));
+
+      const result = await publishBox(payload);
+      console.log("[QuickListBox] publishBox returned:", JSON.stringify(result));
 
       if (result.success) {
         // The server action now returns plain ISO strings, not Date objects,
