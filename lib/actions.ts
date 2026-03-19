@@ -94,12 +94,17 @@ export async function publishBox(input: unknown): Promise<ActionResult> {
       },
     };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error("[publishBox] ZodError:", error.issues);
-      return { success: false, error: error.issues[0].message };
+    // Duck-type check covers both direct instanceof and cross-realm bundling edge cases
+    if (error instanceof z.ZodError || (error instanceof Error && "issues" in error)) {
+      const zodErr = error as z.ZodError;
+      console.error("[publishBox] ZodError:", zodErr.issues);
+      return { success: false, error: zodErr.issues[0]?.message ?? "Geçersiz giriş" };
     }
-    console.error("[publishBox] UNCAUGHT error:", error);
-    return { success: false, error: ERROR_MESSAGES.GENERIC_ERROR };
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("[publishBox] UNCAUGHT error type:", error instanceof Error ? error.constructor.name : typeof error);
+    console.error("[publishBox] UNCAUGHT error message:", msg);
+    console.error("[publishBox] UNCAUGHT error full:", error);
+    return { success: false, error: process.env.NODE_ENV !== "production" ? msg : ERROR_MESSAGES.GENERIC_ERROR };
   }
 }
 
