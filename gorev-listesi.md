@@ -3,7 +3,7 @@
 Bu liste, mevcut prototype'ı gerçek bir uygulamaya dönüştürmek için gereken tüm görevleri kapsar.
 Her görev için öncelik seviyesi (P0 = lansman için şart, P1 = lansmandan kısa süre sonra, P2 = büyüme aşamasında) belirtilmiştir.
 
-Son güncelleme: 2026-03-22 (Kapsamlı denetim sonrası)
+Son güncelleme: 2026-03-22 (Performans iyileştirmeleri — DB indexleri, bundle analizi)
 
 ---
 
@@ -31,7 +31,7 @@ Son güncelleme: 2026-03-22 (Kapsamlı denetim sonrası)
 | 2.4 | Veri doğrulama (Zod) | Tüm API input'ları için Zod schema validation | P0 | ✅ |
 | 2.5 | Hata yönetimi | Global error handling, try-catch yapıları, kullanıcı dostu hata mesajları | P0 | ✅ |
 | 2.6 | Veritabanı seed | Gerçekçi test verileri ile seed script | P1 | ✅ |
-| 2.7 | Veritabanı indexleri | Performans için gerekli index'ler (konum bazlı sorgular vb.) | P1 | ⬜ |
+| 2.7 | Veritabanı indexleri | Performans için gerekli index'ler (konum bazlı sorgular vb.) | P1 | ✅ |
 
 ---
 
@@ -211,11 +211,10 @@ Sadece P0 görevlerini tamamlamak lansman için yeterlidir. Bunlar:
 
 ---
 
-## Kalan Görevler (20 adet)
+## Kalan Görevler (19 adet)
 
 | # | Görev | Öncelik |
 |---|-------|---------|
-| 2.7 | Veritabanı indexleri | P1 |
 | 4.5 | Adres otomatik tamamlama | P1 |
 | 5.2 | Push bildirimleri | P1 |
 | 5.3 | SMS bildirimleri | P2 |
