@@ -141,6 +141,8 @@ model Business {
   payouts       MerchantPayout[]
   favorites     Favorite[]
   templates     BoxTemplate[]
+
+  @@index([isApproved, isActive]) // consumer feed: only approved + active businesses
 }
 
 model BoxTemplate {
@@ -173,6 +175,9 @@ model SurpriseBox {
 
   business Business @relation(fields: [businessId], references: [id])
   orders   Order[]
+
+  @@index([isActive, pickupTimeEnd]) // consumer feed: filter active boxes by pickup window
+  @@index([businessId])              // merchant: fetch all boxes for a business
 }
 
 model Order {
@@ -194,6 +199,10 @@ model Order {
 
   user User        @relation(fields: [userId], references: [id])
   box  SurpriseBox @relation(fields: [boxId], references: [id])
+
+  @@index([userId])  // consumer: all orders for a user
+  @@index([status])  // filtering orders by status (PENDING, PICKED_UP, CANCELLED)
+  // pickupCode is already @unique — unique constraint creates an implicit index
 }
 
 model MerchantPayout {
