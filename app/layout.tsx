@@ -65,6 +65,14 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#059669" />
+        <link rel="apple-touch-icon" href="/globe.svg" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }`,
+          }}
+        />
         {/*
           Google Analytics — uncomment to enable.
           1. Set NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX in your environment variables.
