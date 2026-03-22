@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// No force-dynamic — legal pages are fully static content (no auth, no DB calls).
 
 export const metadata: Metadata = {
   title: "Yasal Bilgiler — FoodRescue",

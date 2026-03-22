@@ -19,10 +19,21 @@ export default async function MerchantPage() {
 
   const business = await prisma.business.findFirst({
     where: { ownerId: session.user.id, isActive: true },
-    include: {
+    select: {
+      name: true,
+      isApproved: true,
       surpriseBoxes: {
-        include: {
-          orders: true,
+        select: {
+          isActive: true,
+          stockQuantity: true,
+          orders: {
+            select: {
+              status: true,
+              updatedAt: true,
+              totalPrice: true,
+              merchantAmount: true,
+            },
+          },
         },
       },
     },
