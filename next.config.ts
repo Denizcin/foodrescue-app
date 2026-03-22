@@ -17,6 +17,14 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    // Business photos are stored as base64 data: URLs in the DB.
+    // next/image does not support data: URIs, so those previews use a
+    // plain <img> tag (see BusinessEditForm). If external hosting is
+    // added in the future, add allowed domains to remotePatterns below.
+    remotePatterns: [],
+    formats: ["image/avif", "image/webp"],
+  },
   async headers() {
     return [
       {
