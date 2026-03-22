@@ -56,17 +56,44 @@ export default function NominateBusinessForm() {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-5xl">
-          🎉
+      <div className="flex flex-col items-center gap-5 px-6 py-16 text-center">
+        {/* Animated checkmark */}
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          {/* Ripple ring */}
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-30" />
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-200">
+            <svg
+              className="h-12 w-12 text-white animate-scale-in"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 12l5 5L20 7" />
+            </svg>
+          </div>
         </div>
-        <h2 className="text-xl font-extrabold text-stone-900">Teşekkürler!</h2>
-        <p className="max-w-xs text-sm text-stone-500">
-          Önerinizi aldık ve en kısa sürede değerlendireceğiz.
-        </p>
+
+        <div>
+          <h2 className="text-2xl font-extrabold text-stone-900">Teşekkürler!</h2>
+          <p className="mt-2 max-w-xs text-sm text-stone-500 leading-relaxed">
+            Önerinizi aldık ve en kısa sürede değerlendireceğiz.
+            Önerdiğin işletme aramıza katılırsa seni haberdar edeceğiz!
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-5 py-3 ring-1 ring-emerald-100">
+          <span className="text-lg">🌍</span>
+          <p className="text-xs font-semibold text-emerald-700">
+            Her öneri, daha az gıda israfı demek!
+          </p>
+        </div>
+
         <button
           onClick={() => { setForm(EMPTY); setSubmitted(false); }}
-          className="mt-2 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="rounded-2xl bg-emerald-600 px-8 py-3 text-sm font-bold text-white hover:bg-emerald-700 active:scale-95 transition-all"
         >
           Yeni Öneri Gönder
         </button>
@@ -195,7 +222,7 @@ export default function NominateBusinessForm() {
 
         <button
           type="submit"
-          className="w-full rounded-full bg-emerald-600 py-4 text-base font-bold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 active:scale-95"
+          className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-bold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700 active:scale-95"
         >
           Öner 💡
         </button>
