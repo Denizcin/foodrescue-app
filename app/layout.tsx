@@ -1,16 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "@/components/shared/CookieConsent";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Headings — Plus Jakarta Sans
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Body — Inter
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+// Monospace — pickup codes, prices in contexts that need tabular clarity
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -73,30 +86,9 @@ export default function RootLayout({
             __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }`,
           }}
         />
-        {/*
-          Google Analytics — uncomment to enable.
-          1. Set NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX in your environment variables.
-          2. Uncomment the two script tags below.
-          3. Redeploy.
-
-          <script
-            async
-            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          />
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { page_path: window.location.pathname });
-              `,
-            }}
-          />
-        */}
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50 text-stone-900`}
+        className={`${jakarta.variable} ${inter.variable} ${jetbrains.variable} antialiased bg-stone-50 text-stone-900`}
       >
         {children}
         <CookieConsent />

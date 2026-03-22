@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ─── Design System Tokens ────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts — wired to next/font CSS variables set in layout.tsx */
+  --font-heading: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body:    var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains), "JetBrains Mono", "Fira Code", monospace;
+
+  /* Brand — primary eco-green */
+  --color-primary:       #059669; /* emerald-600 */
+  --color-primary-dark:  #047857; /* emerald-700 */
+  --color-primary-light: #ecfdf5; /* emerald-50  */
+  --color-primary-ring:  #6ee7b7; /* emerald-300 */
+
+  /* Accent — urgency / deals / savings */
+  --color-accent:        #f59e0b; /* amber-500  */
+  --color-accent-light:  #fffbeb; /* amber-50   */
+  --color-accent-dark:   #d97706; /* amber-600  */
+
+  /* Surface / background */
+  --color-bg:            #fafaf9; /* stone-50   */
+  --color-surface:       #ffffff;
+  --color-surface-raised:#f5f5f4; /* stone-100  */
+  --color-border:        #e7e5e4; /* stone-200  */
+
+  /* Text */
+  --color-text:          #1c1917; /* stone-900  */
+  --color-text-secondary:#57534e; /* stone-600  */
+  --color-text-muted:    #78716c; /* stone-500  */
+  --color-text-subtle:   #a8a29e; /* stone-400  */
+
+  /* Status */
+  --color-success:       #10b981; /* emerald-500 */
+  --color-danger:        #ef4444; /* red-500     */
+  --color-danger-light:  #fef2f2; /* red-50      */
+  --color-warning:       #f59e0b; /* amber-500   */
+  --color-warning-light: #fffbeb; /* amber-50    */
+
+  /* Admin accent */
+  --color-admin:         #4f46e5; /* indigo-600  */
+  --color-admin-light:   #eef2ff; /* indigo-50   */
+  --color-admin-surface: #312e81; /* indigo-900  */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  line-height: 1.25;
+}
+
+/* Pickup codes and monetary values in monospace contexts */
+.font-mono,
+[data-pickup-code] {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1; /* tabular numbers */
+}
+
+/* ─── Focus Styles ────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in   { animation: fade-in  180ms ease-out both; }
+.animate-slide-up  { animation: slide-up 220ms ease-out both; }
+.animate-scale-in  { animation: scale-in 180ms ease-out both; }
