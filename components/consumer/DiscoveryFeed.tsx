@@ -27,6 +27,8 @@ const PILLS: { key: FilterKey; label: string; emoji: string }[] = [
   { key: "GROCERY",     label: "Market",   emoji: "🛒" },
   { key: "CAFE",        label: "Kafe",     emoji: "☕" },
   { key: "GREENGROCER", label: "Manav",    emoji: "🥕" },
+  { key: "PATISSERIE",  label: "Pastane",  emoji: "🎂" },
+  { key: "DELI",        label: "Şarküteri",emoji: "🥩" },
 ];
 
 const BOX_META: Record<BoxCategory, { emoji: string; label: string; gradient: string }> = {
@@ -70,20 +72,38 @@ function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
-/* ── Filter panel (shared between mobile sheet and desktop dropdown) ─── */
+/* ── Filter panel ────────────────────────────────────────── */
+// Manages its own pending state so that changes only apply when user clicks "Filtreyi Uygula"
 function FilterPanel({
-  priceMax,
-  onPriceChange,
-  onClear,
+  initialCategory,
+  initialPriceMax,
+  onApply,
   onClose,
 }: {
-  priceMax: string;
-  onPriceChange: (v: string) => void;
-  onClear: () => void;
+  initialCategory: FilterKey;
+  initialPriceMax: string;
+  onApply: (category: FilterKey, priceMax: string) => void;
   onClose: () => void;
 }) {
+  const [pendingCategory, setPendingCategory] = useState<FilterKey>(initialCategory);
+  const [pendingPriceMax, setPendingPriceMax] = useState(initialPriceMax);
+
+  const hasChanges =
+    pendingCategory !== initialCategory || pendingPriceMax !== initialPriceMax;
+
+  function handleApply() {
+    onApply(pendingCategory, pendingPriceMax);
+    onClose();
+  }
+
+  function handleClear() {
+    setPendingCategory("ALL");
+    setPendingPriceMax("");
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold text-stone-900">Filtrele</p>
         <button
@@ -97,39 +117,69 @@ function FilterPanel({
         </button>
       </div>
 
+      {/* Category section */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
-          Maksimum Fiyat
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-stone-500">
+          Kategori
         </p>
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-stone-400">₺</span>
-            <input
-              type="number"
-              value={priceMax}
-              onChange={(e) => onPriceChange(e.target.value)}
-              placeholder="ör. 100"
-              min={0}
-              className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 pl-8 pr-3 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            />
-          </div>
-          {priceMax && (
+        <div className="flex flex-wrap gap-2">
+          {PILLS.map((pill) => (
             <button
-              onClick={onClear}
-              className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-100"
+              key={pill.key}
+              onClick={() => setPendingCategory(pill.key)}
+              className={[
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                pendingCategory === pill.key
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-stone-100 text-stone-600 hover:bg-stone-200",
+              ].join(" ")}
             >
-              Temizle
+              <span aria-hidden="true">{pill.emoji}</span>
+              {pill.label}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
-      <button
-        onClick={onClose}
-        className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700"
-      >
-        Uygula
-      </button>
+      {/* Price section */}
+      <div>
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-stone-500">
+          Maksimum Fiyat
+        </p>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-stone-400">₺</span>
+          <input
+            type="number"
+            value={pendingPriceMax}
+            onChange={(e) => setPendingPriceMax(e.target.value)}
+            placeholder="ör. 100"
+            min={0}
+            className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 pl-8 pr-3 text-sm text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={handleClear}
+          disabled={pendingCategory === "ALL" && pendingPriceMax === ""}
+          className="flex-1 rounded-xl border border-stone-200 py-3 text-xs font-semibold text-stone-600 hover:border-red-300 hover:text-red-500 disabled:opacity-40 transition-colors"
+        >
+          Temizle
+        </button>
+        <button
+          onClick={handleApply}
+          className={[
+            "flex-1 rounded-xl py-3 text-xs font-bold text-white transition-all",
+            hasChanges
+              ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200"
+              : "bg-emerald-500 hover:bg-emerald-600",
+          ].join(" ")}
+        >
+          Filtreyi Uygula
+        </button>
+      </div>
     </div>
   );
 }
@@ -179,7 +229,18 @@ export default function DiscoveryFeed({
     return a.dist - b.dist;
   });
 
-  const hasActiveFilters = searchQuery.trim() !== "" || priceMax !== "";
+  const hasActiveFilters =
+    searchQuery.trim() !== "" || priceMax !== "" || activeFilter !== "ALL";
+
+  const activeCategory = PILLS.find((p) => p.key === activeFilter);
+
+  // Filter button is highlighted when filter panel is open OR any filter is active
+  const filterButtonActive = showFilters || priceMax !== "" || activeFilter !== "ALL";
+
+  function handleApplyFilters(category: FilterKey, price: string) {
+    setActiveFilter(category);
+    setPriceMax(price);
+  }
 
   function handleToggleFavorite(e: React.MouseEvent, businessId: string) {
     e.preventDefault();
@@ -237,7 +298,7 @@ export default function DiscoveryFeed({
             aria-label="Filtrele"
             className={[
               "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors",
-              showFilters || priceMax
+              filterButtonActive
                 ? "bg-emerald-600 text-white shadow-sm"
                 : "bg-white text-stone-500 ring-1 ring-stone-200 hover:ring-emerald-300",
             ].join(" ")}
@@ -269,19 +330,43 @@ export default function DiscoveryFeed({
             {searchQuery.trim() && (
               <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
                 🔍 &quot;{searchQuery.trim()}&quot;
-                <button onClick={() => setSearchQuery("")} className="ml-0.5 text-emerald-400 hover:text-emerald-700" aria-label="Arama filtreni kaldır">×</button>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="ml-0.5 text-emerald-400 hover:text-emerald-700"
+                  aria-label="Arama filtreni kaldır"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {activeFilter !== "ALL" && activeCategory && (
+              <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                {activeCategory.emoji} {activeCategory.label}
+                <button
+                  onClick={() => setActiveFilter("ALL")}
+                  className="ml-0.5 text-emerald-400 hover:text-emerald-700"
+                  aria-label="Kategori filtreni kaldır"
+                >
+                  ×
+                </button>
               </span>
             )}
             {priceMax && (
               <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
                 ≤ ₺{priceMax}
-                <button onClick={() => setPriceMax("")} className="ml-0.5 text-emerald-400 hover:text-emerald-700" aria-label="Fiyat filtreni kaldır">×</button>
+                <button
+                  onClick={() => setPriceMax("")}
+                  className="ml-0.5 text-emerald-400 hover:text-emerald-700"
+                  aria-label="Fiyat filtreni kaldır"
+                >
+                  ×
+                </button>
               </span>
             )}
           </div>
         )}
 
-        {/* Category pills */}
+        {/* Category pills (quick filter, applies immediately) */}
         {!showMap && (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {PILLS.map((pill) => (
@@ -305,11 +390,11 @@ export default function DiscoveryFeed({
 
       {/* ── Desktop inline filter dropdown ─────────────────── */}
       {showFilters && (
-        <div className="hidden md:block mx-4 mt-2 rounded-2xl bg-white p-4 ring-1 ring-stone-100 shadow-sm">
+        <div className="hidden md:block mx-4 mt-2 rounded-2xl bg-white p-5 ring-1 ring-stone-100 shadow-sm">
           <FilterPanel
-            priceMax={priceMax}
-            onPriceChange={setPriceMax}
-            onClear={() => setPriceMax("")}
+            initialCategory={activeFilter}
+            initialPriceMax={priceMax}
+            onApply={handleApplyFilters}
             onClose={() => setShowFilters(false)}
           />
         </div>
@@ -322,7 +407,7 @@ export default function DiscoveryFeed({
           <p className="text-sm font-medium text-amber-800">{trigger}</p>
         </div>
 
-        {/* Location line + map count */}
+        {/* Location line */}
         <div className="flex items-center justify-between">
           <p className="text-xs text-stone-500">
             {granted && !showAll
@@ -354,7 +439,7 @@ export default function DiscoveryFeed({
                 </div>
                 {hasActiveFilters && (
                   <button
-                    onClick={() => { setSearchQuery(""); setPriceMax(""); }}
+                    onClick={() => { setSearchQuery(""); setPriceMax(""); setActiveFilter("ALL"); }}
                     className="rounded-xl border border-stone-200 px-4 py-2 text-xs font-semibold text-stone-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
                   >
                     Filtreleri Temizle
@@ -512,12 +597,12 @@ export default function DiscoveryFeed({
             onClick={() => setShowFilters(false)}
             aria-hidden="true"
           />
-          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-white p-5 shadow-2xl animate-slide-up">
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-white p-5 pb-8 shadow-2xl animate-slide-up">
             <div className="mb-4 mx-auto h-1 w-10 rounded-full bg-stone-200" aria-hidden="true" />
             <FilterPanel
-              priceMax={priceMax}
-              onPriceChange={setPriceMax}
-              onClear={() => setPriceMax("")}
+              initialCategory={activeFilter}
+              initialPriceMax={priceMax}
+              onApply={handleApplyFilters}
               onClose={() => setShowFilters(false)}
             />
           </div>

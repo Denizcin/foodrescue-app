@@ -36,6 +36,7 @@ function formatDate(iso: string) {
 
 export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) {
   const [quantity, setQuantity] = useState(1);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [pickupCode, setPickupCode] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -266,30 +267,6 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
             </div>
           )}
 
-          {/* ── Mesafeli satış checkbox ── */}
-          {!unavailable && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-white px-4 py-4 ring-1 ring-stone-100">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
-              />
-              <span className="text-xs leading-relaxed text-stone-600">
-                <a
-                  href="/mesafeli-satis-sozlesmesi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-emerald-700 underline hover:text-emerald-800"
-                >
-                  Mesafeli Satış Sözleşmesi
-                </a>
-                &apos;ni okudum ve kabul ediyorum. Sürpriz kutu niteliğini ve cayma hakkının
-                gıda ürünleri için geçerli olmadığını anlıyorum.
-              </span>
-            </label>
-          )}
-
           {buyError && (
             <div className="rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
               <p className="text-sm font-medium text-red-700">{buyError}</p>
@@ -315,8 +292,8 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
             )}
           </div>
           <button
-            onClick={handleBuy}
-            disabled={unavailable || loading || !agreedToTerms}
+            onClick={() => !unavailable && setShowConfirmModal(true)}
+            disabled={unavailable || loading}
             className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-extrabold text-white shadow-md shadow-emerald-200/60 transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none"
           >
             {loading
@@ -329,6 +306,79 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
               ? "Mevcut Değil"
               : "Satın Al ve Rezerve Et →"}
           </button>
+        </div>
+      )}
+
+      {/* ── Confirmation modal ── */}
+      {showConfirmModal && !checkoutFormContent && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-6 sm:items-center">
+          <div className="w-full max-w-sm animate-scale-in rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+            <div className="text-center">
+              <span className="text-4xl">{emoji}</span>
+              <h2 className="mt-2 text-lg font-extrabold text-stone-900">Siparişi Onayla</h2>
+            </div>
+
+            {/* Order summary */}
+            <div className="rounded-2xl bg-stone-50 p-4 space-y-2 ring-1 ring-stone-100">
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">İşletme</span>
+                <span className="font-semibold text-stone-800 text-right max-w-[55%] truncate">
+                  {box.business?.name}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Adet</span>
+                <span className="font-semibold text-stone-800">{quantity} kutu</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Birim fiyat</span>
+                <span className="font-semibold text-emerald-600">₺{box.discountedPrice}</span>
+              </div>
+              <div className="border-t border-stone-200 pt-2 flex justify-between">
+                <span className="text-sm font-bold text-stone-700">Toplam</span>
+                <span className="text-base font-black text-stone-900">₺{total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Mesafeli satış checkbox */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-200">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+              />
+              <span className="text-xs leading-relaxed text-stone-700">
+                <a
+                  href="/mesafeli-satis-sozlesmesi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-emerald-700 underline hover:text-emerald-800"
+                >
+                  Mesafeli Satış Sözleşmesi
+                </a>
+                &apos;ni okudum ve kabul ediyorum. Sürpriz kutu niteliğini ve cayma hakkının
+                gıda ürünleri için geçerli olmadığını anlıyorum.
+              </span>
+            </label>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowConfirmModal(false); setAgreedToTerms(false); }}
+                className="flex-1 rounded-2xl border border-stone-200 py-3.5 text-sm font-semibold text-stone-600 hover:bg-stone-50 transition-colors"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={async () => { setShowConfirmModal(false); await handleBuy(); }}
+                disabled={!agreedToTerms || loading}
+                className="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white hover:bg-emerald-700 active:scale-95 disabled:bg-stone-300 disabled:cursor-not-allowed transition-all"
+              >
+                {loading ? "İşleniyor..." : "Ödemeye Geç →"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
