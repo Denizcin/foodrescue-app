@@ -73,31 +73,26 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 /* ── Filter panel ────────────────────────────────────────── */
-// Manages its own pending state so that changes only apply when user clicks "Filtreyi Uygula"
+// Price-only filter panel; category is handled by the quick pills in the sticky bar.
 function FilterPanel({
-  initialCategory,
   initialPriceMax,
   onApply,
   onClose,
 }: {
-  initialCategory: FilterKey;
   initialPriceMax: string;
-  onApply: (category: FilterKey, priceMax: string) => void;
+  onApply: (priceMax: string) => void;
   onClose: () => void;
 }) {
-  const [pendingCategory, setPendingCategory] = useState<FilterKey>(initialCategory);
   const [pendingPriceMax, setPendingPriceMax] = useState(initialPriceMax);
 
-  const hasChanges =
-    pendingCategory !== initialCategory || pendingPriceMax !== initialPriceMax;
+  const hasChanges = pendingPriceMax !== initialPriceMax;
 
   function handleApply() {
-    onApply(pendingCategory, pendingPriceMax);
+    onApply(pendingPriceMax);
     onClose();
   }
 
   function handleClear() {
-    setPendingCategory("ALL");
     setPendingPriceMax("");
   }
 
@@ -115,30 +110,6 @@ function FilterPanel({
             <path d="M3 3l10 10M13 3L3 13" />
           </svg>
         </button>
-      </div>
-
-      {/* Category section */}
-      <div>
-        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-stone-500">
-          Kategori
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {PILLS.map((pill) => (
-            <button
-              key={pill.key}
-              onClick={() => setPendingCategory(pill.key)}
-              className={[
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
-                pendingCategory === pill.key
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-stone-100 text-stone-600 hover:bg-stone-200",
-              ].join(" ")}
-            >
-              <span aria-hidden="true">{pill.emoji}</span>
-              {pill.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Price section */}
@@ -163,7 +134,7 @@ function FilterPanel({
       <div className="flex gap-2 pt-1">
         <button
           onClick={handleClear}
-          disabled={pendingCategory === "ALL" && pendingPriceMax === ""}
+          disabled={pendingPriceMax === ""}
           className="flex-1 rounded-xl border border-stone-200 py-3 text-xs font-semibold text-stone-600 hover:border-red-300 hover:text-red-500 disabled:opacity-40 transition-colors"
         >
           Temizle
@@ -237,8 +208,7 @@ export default function DiscoveryFeed({
   // Filter button is highlighted when filter panel is open OR any filter is active
   const filterButtonActive = showFilters || priceMax !== "" || activeFilter !== "ALL";
 
-  function handleApplyFilters(category: FilterKey, price: string) {
-    setActiveFilter(category);
+  function handleApplyFilters(price: string) {
     setPriceMax(price);
   }
 
@@ -392,7 +362,7 @@ export default function DiscoveryFeed({
       {showFilters && (
         <div className="hidden md:block mx-4 mt-2 rounded-2xl bg-white p-5 ring-1 ring-stone-100 shadow-sm">
           <FilterPanel
-            initialCategory={activeFilter}
+
             initialPriceMax={priceMax}
             onApply={handleApplyFilters}
             onClose={() => setShowFilters(false)}
@@ -600,7 +570,7 @@ export default function DiscoveryFeed({
           <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-white p-5 pb-8 shadow-2xl animate-slide-up">
             <div className="mb-4 mx-auto h-1 w-10 rounded-full bg-stone-200" aria-hidden="true" />
             <FilterPanel
-              initialCategory={activeFilter}
+  
               initialPriceMax={priceMax}
               onApply={handleApplyFilters}
               onClose={() => setShowFilters(false)}
