@@ -9,6 +9,17 @@ interface OrderWithDetails extends Order {
   user?: { name: string } | null;
 }
 
+const BOX_LABELS: Record<string, string> = {
+  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
+  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+};
+
+const STATUS_BADGE: Record<OrderStatus, { label: string; className: string }> = {
+  PENDING:   { label: "Bekliyor",       className: "bg-amber-100 text-amber-700" },
+  PICKED_UP: { label: "Teslim Edildi ✓",className: "bg-emerald-100 text-emerald-700" },
+  CANCELLED: { label: "İptal Edildi",   className: "bg-red-100 text-red-600" },
+};
+
 export default function OrderHandover({
   initialOrders,
 }: {
@@ -49,9 +60,7 @@ export default function OrderHandover({
     if (res.success) {
       setOrders((prev) =>
         prev.map((o) =>
-          o.id === matchedOrder.id
-            ? { ...o, status: "PICKED_UP" as OrderStatus }
-            : o
+          o.id === matchedOrder.id ? { ...o, status: "PICKED_UP" as OrderStatus } : o
         )
       );
       setMatchedOrder(null);
@@ -61,32 +70,26 @@ export default function OrderHandover({
     }
   }
 
-  const statusBadge: Record<OrderStatus, { label: string; className: string }> =
-    {
-      PENDING: { label: "Bekliyor", className: "bg-amber-100 text-amber-700" },
-      PICKED_UP: {
-        label: "Teslim Edildi ✓",
-        className: "bg-emerald-100 text-emerald-700",
-      },
-      CANCELLED: {
-        label: "İptal Edildi",
-        className: "bg-red-100 text-red-600",
-      },
-    };
+  const pendingCount = orders.filter((o) => o.status === "PENDING").length;
+  const pickedUpCount = orders.filter((o) => o.status === "PICKED_UP").length;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-stone-900">
-          Teslim Alma Doğrulama
-        </h1>
+        <h1 className="text-xl font-extrabold text-stone-900">Teslim Alma Doğrulama</h1>
         <p className="mt-0.5 text-sm text-stone-500">
-          Müşterinin gösterdiği 6 haneli kodu girin.
+          Müşterinin gösterdiği 6 haneli kodu girin ve siparişi tamamlayın.
         </p>
       </div>
 
-      {/* Code input */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-100 space-y-4">
+      {/* Code input card */}
+      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-100 space-y-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 text-center">
+          Teslim Alma Kodu
+        </p>
+
         <input
           ref={inputRef}
           type="text"
@@ -97,7 +100,7 @@ export default function OrderHandover({
             setResult("idle");
             setMatchedOrder(null);
           }}
-          className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-4 text-center font-mono text-3xl font-bold tracking-[0.3em] text-stone-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 uppercase"
+          className="w-full rounded-2xl border-2 border-stone-200 bg-stone-50 px-4 py-5 text-center font-mono text-4xl font-black tracking-[0.5em] text-stone-900 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100 uppercase placeholder-stone-300 transition-all"
           placeholder="——————"
           autoComplete="off"
           spellCheck={false}
@@ -106,100 +109,168 @@ export default function OrderHandover({
         <button
           onClick={handleVerify}
           disabled={code.length < 6 || verifying}
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="w-full rounded-2xl bg-emerald-600 py-4 text-base font-extrabold text-white shadow-md shadow-emerald-200 transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
         >
-          {verifying ? "Doğrulanıyor..." : "Doğrula ve Tamamla"}
+          {verifying ? "Doğrulanıyor..." : "Doğrula ve Tamamla →"}
         </button>
 
         {/* Success result */}
         {result === "success" && matchedOrder && (
-          <div className="rounded-xl bg-emerald-50 p-4 ring-1 ring-emerald-200 space-y-3">
-            <p className="text-sm font-semibold text-emerald-800">
-              ✅ Sipariş bulundu!
-            </p>
-            <div className="text-sm text-stone-700 space-y-1">
-              <p>
-                <span className="text-stone-500">Müşteri:</span>{" "}
-                {matchedOrder.user?.name ?? "—"}
-              </p>
-              <p>
-                <span className="text-stone-500">Kutu:</span>{" "}
-                {matchedOrder.box?.category ?? "—"}
-              </p>
-              <p>
-                <span className="text-stone-500">Adet:</span>{" "}
-                {matchedOrder.quantity}
-              </p>
-              <p>
-                <span className="text-stone-500">Toplam:</span> ₺
-                {matchedOrder.totalPrice.toFixed(2)}
-              </p>
+          <div className="rounded-2xl bg-emerald-50 p-5 ring-1 ring-emerald-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-lg">
+                ✅
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-emerald-800">Sipariş bulundu!</p>
+                <p className="text-xs text-emerald-600">Aşağıdaki bilgileri doğrulayın</p>
+              </div>
             </div>
+
+            <div className="rounded-xl bg-white p-4 ring-1 ring-emerald-100 space-y-2.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500">Müşteri</span>
+                <span className="font-semibold text-stone-800">
+                  {matchedOrder.user?.name ?? "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500">Kutu</span>
+                <span className="font-semibold text-stone-800">
+                  {BOX_LABELS[matchedOrder.box?.category] ?? matchedOrder.box?.category ?? "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500">Adet</span>
+                <span className="font-semibold text-stone-800">{matchedOrder.quantity}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-stone-100 pt-2">
+                <span className="text-stone-500 font-medium">Toplam</span>
+                <span className="text-base font-extrabold text-emerald-700">
+                  ₺{matchedOrder.totalPrice.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={handleConfirm}
               disabled={confirming}
-              className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+              className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50 transition-all"
             >
-              {confirming ? "Onaylanıyor..." : "Teslimi Onayla"}
+              {confirming ? "Onaylanıyor..." : "Teslimi Onayla ✓"}
             </button>
           </div>
         )}
 
         {/* Error result */}
         {result === "error" && (
-          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-200">
-            ❌ Eşleşen sipariş bulunamadı. Lütfen kodu kontrol edin.
+          <div className="flex items-start gap-3 rounded-2xl bg-red-50 p-4 ring-1 ring-red-200">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-lg">
+              ❌
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800">Sipariş bulunamadı</p>
+              <p className="mt-0.5 text-xs text-red-600">
+                Bu koda ait aktif bir sipariş yok. Kodu tekrar kontrol edin.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Today's orders list */}
+      {/* Today's orders */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
-          Bugünün Siparişleri
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+            Bugünün Siparişleri
+          </h2>
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+                {pendingCount} bekliyor
+              </span>
+            )}
+            {pickedUpCount > 0 && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+                {pickedUpCount} teslim edildi
+              </span>
+            )}
+          </div>
+        </div>
 
         {orders.length === 0 ? (
-          <p className="text-sm text-stone-400">Henüz sipariş yok.</p>
+          <div className="rounded-2xl bg-white py-12 text-center shadow-sm ring-1 ring-stone-100">
+            <p className="text-2xl">📋</p>
+            <p className="mt-2 text-sm text-stone-400">Henüz bugün sipariş yok.</p>
+          </div>
         ) : (
-          <div className="space-y-2">
-            {orders.map((order) => {
-              const badge = statusBadge[order.status];
-              const displayCode =
-                order.status === "PICKED_UP"
-                  ? order.pickupCode
-                  : maskPickupCode(order.pickupCode);
-
-              return (
-                <div
-                  key={order.id}
-                  className={`flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-100 ${
-                    order.status === "CANCELLED" ? "opacity-50" : ""
-                  }`}
-                >
-                  <div className="space-y-0.5">
-                    <p
-                      className={`text-sm font-bold font-mono tracking-widest ${
-                        order.status === "CANCELLED"
-                          ? "line-through text-stone-400"
-                          : "text-stone-800"
-                      }`}
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-100">
+            <table className="min-w-full divide-y divide-stone-100 text-sm">
+              <thead className="bg-stone-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Kod
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Müşteri
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Kutu
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Adet
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Durum
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {orders.map((order) => {
+                  const badge = STATUS_BADGE[order.status];
+                  const displayCode =
+                    order.status === "PICKED_UP"
+                      ? order.pickupCode
+                      : maskPickupCode(order.pickupCode);
+                  return (
+                    <tr
+                      key={order.id}
+                      className={[
+                        "transition-colors hover:bg-stone-50",
+                        order.status === "CANCELLED" ? "opacity-40" : "",
+                      ].join(" ")}
                     >
-                      {displayCode}
-                    </p>
-                    <p className="text-xs text-stone-500">
-                      {order.user?.name ?? "—"} · {order.box?.category ?? "—"}{" "}
-                      · {order.quantity} adet
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge.className}`}
-                  >
-                    {badge.label}
-                  </span>
-                </div>
-              );
-            })}
+                      <td className="px-4 py-3">
+                        <span
+                          className={[
+                            "font-mono text-sm font-bold tracking-widest",
+                            order.status === "CANCELLED"
+                              ? "line-through text-stone-400"
+                              : "text-stone-800",
+                          ].join(" ")}
+                        >
+                          {displayCode}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-stone-600">
+                        {order.user?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-stone-600">
+                        {BOX_LABELS[order.box?.category ?? ""] ?? order.box?.category ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-center font-semibold text-stone-700">
+                        {order.quantity}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
