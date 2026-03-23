@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { signIn } from "@/auth";
 import { AuthError } from "@auth/core/errors";
 import crypto from "crypto";
-import { sendEmailVerification } from "@/lib/email";
+import { sendEmailVerification, sendPasswordResetEmail } from "@/lib/email";
 
 // ─── Consumer kayıt ──────────────────────────────────────────────────────────
 
@@ -187,10 +187,7 @@ export async function requestPasswordReset(formData: FormData) {
     data: { email, token, expires },
   });
 
-  // TODO: Resend ile email gönder
-  // await sendPasswordResetEmail(email, token);
-  // Geliştirme ortamında konsola yaz:
-  console.log(`[DEV] Şifre sıfırlama linki: /sifre-sifirla/yeni?token=${token}`);
+  await sendPasswordResetEmail({ to: user.email, name: user.name ?? user.email, token });
 
   return { success: true };
 }
