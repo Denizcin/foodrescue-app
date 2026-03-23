@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { BoxCategory, SurpriseBox } from "@/lib/types";
 import { publishBox } from "@/lib/actions";
+import { analytics } from "@/lib/analytics";
 
 const CATEGORY_OPTIONS: {
   value: BoxCategory;
@@ -179,6 +180,7 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
           pickupTimeEnd: String(box.pickupTimeEnd),
           isActive: box.isActive,
         };
+        analytics.boxPublished(form.category, parseInt(form.quantity, 10));
         setPublished((prev) => [newBox, ...prev]);
         setForm(DEFAULT_FORM);
         setSuccess(true);

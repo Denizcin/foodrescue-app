@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
+import { uploadBusinessImage } from "@/lib/cloudinary";
 
 // ─── Profile update (consumer & merchant owner info) ─────────────────────────
 
@@ -76,21 +77,20 @@ export async function updateBusiness(input: unknown): Promise<ActionResult> {
   }
 }
 
-// ─── Business image upload (base64) ─────────────────────────────────────────
+// ─── Business image upload (Cloudinary) ──────────────────────────────────────
 
 export async function updateBusinessImage(imageDataUrl: string): Promise<ActionResult> {
   try {
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Giriş yapmanız gerekiyor." };
 
-    // Validate it's a data URL (JPEG or PNG)
     if (!imageDataUrl.startsWith("data:image/")) {
       return { success: false, error: "Geçersiz dosya formatı. JPEG veya PNG yükleyin." };
     }
 
-    // Rough size check: base64 ~1.33× raw. Limit to ~1 MB raw ≈ 1.4 MB base64
-    if (imageDataUrl.length > 1_400_000) {
-      return { success: false, error: "Dosya boyutu çok büyük. Maksimum 1 MB." };
+    // ~5 MB base64 ≈ 3.75 MB raw
+    if (imageDataUrl.length > 5_000_000) {
+      return { success: false, error: "Dosya boyutu çok büyük. Maksimum 3.5 MB." };
     }
 
     const business = await prisma.business.findFirst({
@@ -98,9 +98,11 @@ export async function updateBusinessImage(imageDataUrl: string): Promise<ActionR
     });
     if (!business) return { success: false, error: "Aktif işletme bulunamadı." };
 
+    const imageUrl = await uploadBusinessImage(imageDataUrl, `business-${business.id}`);
+
     await prisma.business.update({
       where: { id: business.id },
-      data: { imageUrl: imageDataUrl },
+      data: { imageUrl },
     });
 
     revalidatePath("/merchant/settings");

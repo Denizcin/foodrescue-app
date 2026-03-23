@@ -59,9 +59,9 @@ export default function BusinessEditForm({
       setImageMessage("Lütfen JPEG veya PNG dosyası seçin.");
       return;
     }
-    if (file.size > 1_000_000) {
+    if (file.size > 5_000_000) {
       setImageStatus("error");
-      setImageMessage("Dosya 1 MB'dan küçük olmalıdır.");
+      setImageMessage("Dosya 5 MB'dan küçük olmalıdır.");
       return;
     }
 
@@ -106,7 +106,7 @@ export default function BusinessEditForm({
             >
               {isImagePending ? "Yükleniyor…" : "Fotoğraf Seç"}
             </button>
-            <p className="mt-1 text-xs text-stone-400">JPEG veya PNG, maks. 1 MB</p>
+            <p className="mt-1 text-xs text-stone-400">JPEG veya PNG, maks. 5 MB</p>
             {imageStatus !== "idle" && (
               <p className={`mt-1 text-xs font-medium ${imageStatus === "success" ? "text-emerald-600" : "text-red-600"}`}>
                 {imageMessage}

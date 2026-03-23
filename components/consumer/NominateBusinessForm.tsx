@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { nominateBusiness } from "@/lib/actions";
+import { analytics } from "@/lib/analytics";
 
 interface FormState {
   nominatorName: string;
@@ -43,6 +44,7 @@ export default function NominateBusinessForm() {
     if (!validate()) return;
     const result = await nominateBusiness(form);
     if (result.success) {
+      analytics.businessNominated(form.nominatedBusinessName);
       setSubmitted(true);
     }
   }

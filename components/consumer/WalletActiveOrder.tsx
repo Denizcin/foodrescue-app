@@ -7,6 +7,7 @@ import type { Order, User } from "@/lib/types";
 import ImpactBadge from "@/components/shared/ImpactBadge";
 import PickupCountdown from "@/components/shared/PickupCountdown";
 import { cancelOrder } from "@/lib/actions";
+import { analytics } from "@/lib/analytics";
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).catch(() => {});
@@ -59,6 +60,7 @@ export default function WalletActiveOrder({
     const result = await cancelOrder(orderId);
     setCancelLoading(null);
     if (result.success) {
+      analytics.orderCancelled(orderId);
       setOrders((prev) =>
         prev.map((o) =>
           o.id === orderId ? { ...o, status: "CANCELLED" as const } : o

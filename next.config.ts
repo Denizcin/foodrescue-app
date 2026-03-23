@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -18,17 +19,22 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   images: {
-    // Business photos are stored as base64 data: URLs in the DB.
-    // next/image does not support data: URIs, so those previews use a
-    // plain <img> tag (see BusinessEditForm). If external hosting is
-    // added in the future, add allowed domains to remotePatterns below.
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
     formats: ["image/avif", "image/webp"],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
   },
   async headers() {
     return [
       {
-        // Apply to every route
         source: "/(.*)",
         headers: SECURITY_HEADERS,
       },
@@ -36,4 +42,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+  silent: true,
+  tunnelRoute: "/monitoring",
+  sourcemaps: { disable: true },
+});

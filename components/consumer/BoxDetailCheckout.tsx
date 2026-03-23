@@ -7,6 +7,7 @@ import PaymentCheckout from "@/components/consumer/PaymentCheckout";
 import { createOrder } from "@/lib/actions";
 import { initiatePayment } from "@/lib/payment-actions";
 import type { SurpriseBox } from "@/lib/types";
+import { analytics } from "@/lib/analytics";
 
 const CATEGORY_GRADIENT: Record<string, string> = {
   BAKERY:        "from-amber-400 to-amber-300",
@@ -80,6 +81,7 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
     const payResult = await initiatePayment(box.id, quantity);
 
     if (payResult.success) {
+      analytics.orderCreated(box.id, box.business?.name ?? "", total);
       setLoading(false);
       setCheckoutFormContent(payResult.data.checkoutFormContent);
       return;
@@ -94,6 +96,7 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
     const result = await createOrder({ boxId: box.id, quantity });
     setLoading(false);
     if (result.success) {
+      analytics.orderCreated(box.id, box.business?.name ?? "", total);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const order = result.data as any;
       setPickupCode(order.pickupCode);
@@ -109,12 +112,21 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
       <div className="mx-auto max-w-lg pb-32">
 
         {/* ── Header ── */}
-        <div className={`relative flex h-52 items-center justify-center bg-gradient-to-br ${gradient} overflow-hidden`}>
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-black/10 blur-2xl" />
+        <div className={`relative flex h-52 items-center justify-center overflow-hidden ${box.business?.imageUrl ? "bg-stone-800" : `bg-gradient-to-br ${gradient}`}`}>
+          {box.business?.imageUrl ? (
+            <img
+              src={box.business.imageUrl}
+              alt={box.business.name}
+              className="absolute inset-0 h-full w-full object-cover opacity-80"
+            />
+          ) : (
+            <>
+              <div className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-black/10 blur-2xl" />
+            </>
+          )}
 
-          <span className="relative text-8xl drop-shadow-sm">{emoji}</span>
+          <span className="relative text-8xl drop-shadow-lg">{emoji}</span>
 
           {/* Unavailable overlay */}
           {unavailable && (

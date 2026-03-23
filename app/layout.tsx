@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "@/components/shared/CookieConsent";
+import { Suspense } from "react";
+import GoogleAnalytics from "@/components/shared/GoogleAnalytics";
 
 // Headings — Plus Jakarta Sans
 const jakarta = Plus_Jakarta_Sans({
@@ -92,6 +94,11 @@ export default function RootLayout({
       >
         {children}
         <CookieConsent />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <Suspense fallback={null}>
+            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          </Suspense>
+        )}
       </body>
     </html>
   );

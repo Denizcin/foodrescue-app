@@ -458,10 +458,20 @@ export default function DiscoveryFeed({
                     </div>
                   )}
 
-                  {/* Left: colored gradient with emoji */}
-                  <div className={`flex w-20 shrink-0 items-center justify-center bg-gradient-to-br ${meta.gradient}`}>
-                    <span className="text-4xl" aria-hidden="true">{meta.emoji}</span>
-                  </div>
+                  {/* Left: business photo or colored gradient with emoji */}
+                  {box.business?.imageUrl ? (
+                    <div className="relative w-20 shrink-0 overflow-hidden">
+                      <img
+                        src={box.business.imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className={`flex w-20 shrink-0 items-center justify-center bg-gradient-to-br ${meta.gradient}`}>
+                      <span className="text-4xl" aria-hidden="true">{meta.emoji}</span>
+                    </div>
+                  )}
 
                   {/* Right: content */}
                   <div className="flex flex-1 flex-col gap-1.5 p-3 min-w-0">
