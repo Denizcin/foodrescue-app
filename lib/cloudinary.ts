@@ -8,7 +8,8 @@ cloudinary.config({
 
 /**
  * Uploads a data URL or a remote URL to Cloudinary.
- * Images are resized to 800×600 (fill crop) with auto quality and format.
+ * Uses "limit" crop so the original aspect ratio is fully preserved —
+ * the image is only downscaled if it exceeds 1200px on either side.
  * Returns the HTTPS secure URL.
  */
 export async function uploadBusinessImage(
@@ -21,9 +22,9 @@ export async function uploadBusinessImage(
     overwrite: true,
     transformation: [
       {
-        width: 800,
-        height: 600,
-        crop: "fill",
+        width: 1200,
+        height: 1200,
+        crop: "limit",      // never crops; shrinks only if larger than 1200×1200
         quality: "auto",
         fetch_format: "auto",
       },

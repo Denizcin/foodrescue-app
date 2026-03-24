@@ -92,7 +92,7 @@ export default function BusinessEditForm({
         <div className="flex items-center gap-4">
           <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-stone-100">
             {imagePreview ? (
-              <img src={imagePreview} alt="İşletme" className="h-full w-full object-cover" />
+              <img src={imagePreview} alt="İşletme" className="h-full w-full object-contain" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-2xl">🏪</div>
             )}

@@ -112,21 +112,20 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
       <div className="mx-auto max-w-lg pb-32">
 
         {/* ── Header ── */}
-        <div className={`relative flex h-52 items-center justify-center overflow-hidden ${box.business?.imageUrl ? "bg-stone-800" : `bg-gradient-to-br ${gradient}`}`}>
+        <div className={`relative flex h-52 items-center justify-center overflow-hidden ${box.business?.imageUrl ? "bg-stone-900" : `bg-gradient-to-br ${gradient}`}`}>
           {box.business?.imageUrl ? (
             <img
               src={box.business.imageUrl}
               alt={box.business.name}
-              className="absolute inset-0 h-full w-full object-cover opacity-80"
+              className="absolute inset-0 h-full w-full object-contain"
             />
           ) : (
             <>
               <div className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
               <div className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-black/10 blur-2xl" />
+              <span className="relative text-8xl drop-shadow-lg">{emoji}</span>
             </>
           )}
-
-          <span className="relative text-8xl drop-shadow-lg">{emoji}</span>
 
           {/* Unavailable overlay */}
           {unavailable && (

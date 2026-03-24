@@ -460,11 +460,11 @@ export default function DiscoveryFeed({
 
                   {/* Left: business photo or colored gradient with emoji */}
                   {box.business?.imageUrl ? (
-                    <div className="relative w-20 shrink-0 overflow-hidden">
+                    <div className="flex w-20 shrink-0 items-center justify-center overflow-hidden bg-stone-100">
                       <img
                         src={box.business.imageUrl}
                         alt=""
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                       />
                     </div>
                   ) : (
