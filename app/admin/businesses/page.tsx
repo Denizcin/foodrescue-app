@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import BusinessActions from "@/components/admin/BusinessActions";
+import AdminBetaActions from "@/components/admin/AdminBetaActions";
 
 const CATEGORY_LABEL: Record<string, string> = {
   BAKERY: "Fırın", RESTAURANT: "Restoran", CAFE: "Kafe", GROCERY: "Market",
@@ -49,8 +50,12 @@ export default async function AdminBusinessesPage({
           </p>
         </div>
 
-        {/* Search + filter */}
-        <form method="GET" className="flex gap-2 sm:w-auto w-full">
+        {/* Beta quick actions */}
+        <AdminBetaActions pendingCount={pendingCount} />
+      </div>
+
+      {/* Search + filter */}
+      <form method="GET" className="flex gap-2 sm:w-auto w-full">
           <div className="relative flex-1">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="7" cy="7" r="5" /><path d="M12 12l2.5 2.5" />
@@ -86,7 +91,6 @@ export default async function AdminBusinessesPage({
             </a>
           )}
         </form>
-      </div>
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200">
