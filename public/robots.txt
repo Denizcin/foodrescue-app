@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /consumer
+Allow: /kvkk
+Allow: /kullanim-sartlari
+Allow: /cerez-politikasi
+
+Disallow: /admin
+Disallow: /merchant
+Disallow: /api
+Disallow: /giris
+Disallow: /kayit
+Disallow: /monitoring
+Disallow: /sifre-sifirla
+Disallow: /email-dogrula
+
+Sitemap: https://foodrescue.com.tr/sitemap.xml

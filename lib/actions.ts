@@ -28,10 +28,8 @@ function generatePickupCode(): string {
 // ─── publishBox ──────────────────────────────────────────────────────────────
 
 export async function publishBox(input: unknown): Promise<ActionResult> {
-  console.log("=== PUBLISH BOX CALLED ===");
   try {
     const session = await auth();
-    console.log("[publishBox] session:", session?.user?.id, session?.user?.role);
 
     if (!session?.user?.id) {
       return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };

@@ -55,15 +55,12 @@ export const metadata: Metadata = {
     title: "FoodRescue — Sürpriz Kutuları Keşfet, Tasarruf Et, İsrafı Önle",
     description:
       "İndirimli sürpriz kutularla para biriktir, yerel işletmeleri keşfet ve gıda israfını önle.",
-    // TODO: Replace with real OG image (1200x630) before launch
-    // images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FoodRescue" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "FoodRescue — Sürpriz Kutuları Keşfet, Tasarruf Et, İsrafı Önle",
     description:
       "İndirimli sürpriz kutularla para biriktir, yerel işletmeleri keşfet ve gıda israfını önle.",
-    // TODO: images: ["/og-image.png"],
   },
   robots: {
     index: true,

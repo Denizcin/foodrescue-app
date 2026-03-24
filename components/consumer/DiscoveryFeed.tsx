@@ -465,6 +465,8 @@ export default function DiscoveryFeed({
                         src={box.business.imageUrl}
                         alt=""
                         className="h-full w-full object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   ) : (

@@ -13,6 +13,9 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("❌ Seed must not run in production. Aborting.");
+  }
   console.log("🌱 Seeding database...");
 
   // Clean up existing data
