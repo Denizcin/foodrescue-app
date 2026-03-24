@@ -24,8 +24,10 @@ function getResend() {
   return _resend;
 }
 
+// Use EMAIL_FROM env var for a verified custom domain.
+// Falls back to Resend's onboarding address (works on free tier without domain verification).
 const FROM =
-  process.env.EMAIL_FROM ?? "FoodRescue <noreply@foodrescue.com.tr>";
+  process.env.EMAIL_FROM ?? "FoodRescue <onboarding@resend.dev>";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -45,16 +47,21 @@ async function dispatch(opts: { to: string; subject: string; html: string }) {
     return;
   }
 
+  console.log(`[email] Sending via Resend → to: ${opts.to} | subject: ${opts.subject} | from: ${FROM}`);
   try {
-    await client.emails.send({
+    const result = await client.emails.send({
       from: FROM,
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
     });
+    if ("error" in result && result.error) {
+      console.error("[email] Resend API error:", JSON.stringify(result.error));
+    } else {
+      console.log(`[email] Sent successfully → id: ${(result as { data?: { id?: string } }).data?.id ?? "?"}`);
+    }
   } catch (err) {
-    // Email failures must never break the business flow — log and continue
-    console.error("[email] send failed:", err);
+    console.error("[email] send threw:", err);
   }
 }
 
@@ -156,6 +163,7 @@ export async function sendEmailVerification(p: {
   name: string;
   token: string;
 }) {
+  console.log(`[email] sendEmailVerification called → to: ${p.to}`);
   const verifyUrl = `${APP_URL}/email-dogrula?token=${p.token}`;
 
   await dispatch({
