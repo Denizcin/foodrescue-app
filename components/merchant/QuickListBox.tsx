@@ -11,14 +11,9 @@ const CATEGORY_OPTIONS: {
   emoji: string;
   desc: string;
 }[] = [
-  { value: "BAKERY",        label: "Fırın",       emoji: "🥐", desc: "Ekmek, börek, unlu mamüller" },
-  { value: "SUSHI",         label: "Suşi",        emoji: "🍣", desc: "Japon mutfağı, sushi rolls" },
-  { value: "GROCERY",       label: "Market",      emoji: "🛒", desc: "Market, konserve ürünler" },
-  { value: "DELI",          label: "Şarküteri",   emoji: "🥩", desc: "Et, peynir, şarküteri" },
-  { value: "CAFE",          label: "Kafe",        emoji: "☕", desc: "İçecekler, sandviç, atıştırmalık" },
-  { value: "PREPARED_MEAL", label: "Hazır Yemek", emoji: "🍱", desc: "Pişmiş hazır yemekler" },
-  { value: "PRODUCE",       label: "Manav",       emoji: "🥕", desc: "Meyve ve sebze" },
-  { value: "MIXED",         label: "Karışık",     emoji: "🎁", desc: "Çeşitli ürünler" },
+  { value: "BAKERY",     label: "Fırın",   emoji: "🥐", desc: "Ekmek, börek, poğaça, unlu mamüller" },
+  { value: "PATISSERIE", label: "Pastane", emoji: "🎂", desc: "Pasta, kek, kurabiye, tatlı" },
+  { value: "CAFE",       label: "Kafe",    emoji: "☕", desc: "Sandviç, kek, atıştırmalık, içecek" },
 ];
 
 interface FormState {
@@ -228,7 +223,7 @@ export default function QuickListBox({ publishedBoxes }: { publishedBoxes: Surpr
         {/* Category — large emoji card grid */}
         <div className={sectionCls}>
           <label className={labelCls}>Kategori</label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {CATEGORY_OPTIONS.map((opt) => {
               const active = form.category === opt.value;
               return (

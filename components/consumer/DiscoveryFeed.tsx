@@ -21,25 +21,16 @@ const TRIGGERS = [
 type FilterKey = "ALL" | BusinessCategory;
 
 const PILLS: { key: FilterKey; label: string; emoji: string }[] = [
-  { key: "ALL",         label: "Tümü",     emoji: "✨" },
-  { key: "BAKERY",      label: "Fırın",    emoji: "🥐" },
-  { key: "RESTAURANT",  label: "Restoran", emoji: "🍽️" },
-  { key: "GROCERY",     label: "Market",   emoji: "🛒" },
-  { key: "CAFE",        label: "Kafe",     emoji: "☕" },
-  { key: "GREENGROCER", label: "Manav",    emoji: "🥕" },
-  { key: "PATISSERIE",  label: "Pastane",  emoji: "🎂" },
-  { key: "DELI",        label: "Şarküteri",emoji: "🥩" },
+  { key: "ALL",        label: "Tümü",   emoji: "✨" },
+  { key: "BAKERY",     label: "Fırın",  emoji: "🥐" },
+  { key: "PATISSERIE", label: "Pastane",emoji: "🎂" },
+  { key: "CAFE",       label: "Kafe",   emoji: "☕" },
 ];
 
 const BOX_META: Record<BoxCategory, { emoji: string; label: string; gradient: string }> = {
-  BAKERY:        { emoji: "🥐", label: "Fırın Kutusu",      gradient: "from-amber-100 to-amber-200" },
-  SUSHI:         { emoji: "🍣", label: "Suşi Kutusu",       gradient: "from-pink-100 to-pink-200" },
-  GROCERY:       { emoji: "🛒", label: "Market Kutusu",     gradient: "from-sky-100 to-sky-200" },
-  DELI:          { emoji: "🥩", label: "Şarküteri Kutusu",  gradient: "from-red-100 to-red-200" },
-  CAFE:          { emoji: "☕", label: "Kafe Kutusu",        gradient: "from-stone-100 to-stone-200" },
-  PREPARED_MEAL: { emoji: "🍱", label: "Hazır Yemek",       gradient: "from-orange-100 to-orange-200" },
-  PRODUCE:       { emoji: "🥕", label: "Manav Kutusu",      gradient: "from-green-100 to-green-200" },
-  MIXED:         { emoji: "🎁", label: "Karışık Kutu",      gradient: "from-purple-100 to-purple-200" },
+  BAKERY:     { emoji: "🥐", label: "Fırın Kutusu",   gradient: "from-amber-100 to-amber-200" },
+  PATISSERIE: { emoji: "🎂", label: "Pastane Kutusu", gradient: "from-pink-100 to-pink-200" },
+  CAFE:       { emoji: "☕", label: "Kafe Kutusu",     gradient: "from-stone-100 to-stone-200" },
 };
 
 const DEFAULT_RADIUS_KM = 50;

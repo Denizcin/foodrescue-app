@@ -2,16 +2,7 @@ import { z } from "zod";
 
 export const createBoxSchema = z
   .object({
-    category: z.enum([
-      "BAKERY",
-      "SUSHI",
-      "GROCERY",
-      "DELI",
-      "CAFE",
-      "PREPARED_MEAL",
-      "PRODUCE",
-      "MIXED",
-    ]),
+    category: z.enum(["BAKERY", "PATISSERIE", "CAFE"]),
     description: z.string().max(500).optional(),
     originalPrice: z.number().positive("Fiyat sıfırdan büyük olmalıdır"),
     discountedPrice: z

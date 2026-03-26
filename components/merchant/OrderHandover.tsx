@@ -10,8 +10,7 @@ interface OrderWithDetails extends Order {
 }
 
 const BOX_LABELS: Record<string, string> = {
-  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
-  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+  BAKERY: "Fırın", PATISSERIE: "Pastane", CAFE: "Kafe",
 };
 
 const STATUS_BADGE: Record<OrderStatus, { label: string; className: string }> = {

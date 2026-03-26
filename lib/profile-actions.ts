@@ -118,7 +118,7 @@ export async function updateBusinessImage(imageDataUrl: string): Promise<ActionR
 const boxTemplateSchema = z.object({
   label: z.string().min(1, "Şablon adı zorunludur"),
   category: z.enum([
-    "BAKERY", "SUSHI", "GROCERY", "DELI", "CAFE", "PREPARED_MEAL", "PRODUCE", "MIXED",
+    "BAKERY", "PATISSERIE", "CAFE",
   ]),
   description: z.string().optional(),
   originalPrice: z.number().min(0.01, "Orijinal fiyat zorunludur"),

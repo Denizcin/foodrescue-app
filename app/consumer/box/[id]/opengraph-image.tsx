@@ -6,14 +6,9 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const BOX_META: Record<string, { emoji: string; label: string; bg: string; accent: string }> = {
-  BAKERY:        { emoji: "🥐", label: "Fırın Kutusu",      bg: "#fef9ee", accent: "#d97706" },
-  SUSHI:         { emoji: "🍣", label: "Suşi Kutusu",       bg: "#fff0f6", accent: "#db2777" },
-  GROCERY:       { emoji: "🛒", label: "Market Kutusu",     bg: "#eff6ff", accent: "#2563eb" },
-  DELI:          { emoji: "🥩", label: "Şarküteri Kutusu",  bg: "#fef2f2", accent: "#dc2626" },
-  CAFE:          { emoji: "☕", label: "Kafe Kutusu",        bg: "#fafaf9", accent: "#78716c" },
-  PREPARED_MEAL: { emoji: "🍱", label: "Hazır Yemek",       bg: "#fff7ed", accent: "#ea580c" },
-  PRODUCE:       { emoji: "🥕", label: "Manav Kutusu",      bg: "#f0fdf4", accent: "#16a34a" },
-  MIXED:         { emoji: "🎁", label: "Karışık Kutu",      bg: "#faf5ff", accent: "#9333ea" },
+  BAKERY:     { emoji: "🥐", label: "Fırın Kutusu",   bg: "#fef9ee", accent: "#d97706" },
+  PATISSERIE: { emoji: "🎂", label: "Pastane Kutusu", bg: "#fff0f6", accent: "#db2777" },
+  CAFE:       { emoji: "☕", label: "Kafe Kutusu",     bg: "#fafaf9", accent: "#78716c" },
 };
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +21,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     })
     .catch(() => null);
 
-  const meta = BOX_META[box?.category ?? "MIXED"] ?? BOX_META.MIXED;
+  const meta = BOX_META[box?.category ?? "BAKERY"] ?? BOX_META.BAKERY;
   const savings = box ? (box.originalPrice - box.discountedPrice).toFixed(0) : "0";
 
   return new ImageResponse(

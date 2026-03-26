@@ -10,19 +10,13 @@ import type { SurpriseBox } from "@/lib/types";
 import { analytics } from "@/lib/analytics";
 
 const CATEGORY_GRADIENT: Record<string, string> = {
-  BAKERY:        "from-amber-400 to-amber-300",
-  SUSHI:         "from-pink-400 to-rose-300",
-  GROCERY:       "from-blue-400 to-sky-300",
-  DELI:          "from-red-400 to-orange-300",
-  CAFE:          "from-stone-400 to-stone-300",
-  PREPARED_MEAL: "from-orange-400 to-amber-300",
-  PRODUCE:       "from-green-400 to-emerald-300",
-  MIXED:         "from-purple-400 to-violet-300",
+  BAKERY:     "from-amber-400 to-amber-300",
+  PATISSERIE: "from-pink-400 to-rose-300",
+  CAFE:       "from-stone-400 to-stone-300",
 };
 
 const BOX_EMOJI: Record<string, string> = {
-  BAKERY: "🥐", SUSHI: "🍣", GROCERY: "🛒", DELI: "🥩",
-  CAFE: "☕", PREPARED_MEAL: "🍱", PRODUCE: "🥕", MIXED: "🎁",
+  BAKERY: "🥐", PATISSERIE: "🎂", CAFE: "☕",
 };
 
 const CONFETTI = ["🎉", "🎊", "✨", "🌟", "🎁", "💚", "🥳", "🍀"];
@@ -73,36 +67,47 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
   const stockRatio = Math.min(1, box.stockQuantity / 10);
   const stockLow = box.stockQuantity > 0 && box.stockQuantity <= 3;
 
+  // Called from inside the confirmation modal — keeps the modal open during the request
+  // so any error message is visible inside the modal rather than below the fold.
   async function handleBuy() {
     if (unavailable || !box) return;
     setLoading(true);
     setBuyError(null);
 
-    const payResult = await initiatePayment(box.id, quantity);
+    try {
+      const payResult = await initiatePayment(box.id, quantity);
 
-    if (payResult.success) {
-      analytics.orderCreated(box.id, box.business?.name ?? "", total);
+      if (payResult.success) {
+        analytics.orderCreated(box.id, box.business?.name ?? "", total);
+        setCheckoutFormContent(payResult.data.checkoutFormContent);
+        setShowConfirmModal(false);
+        setLoading(false);
+        return;
+      }
+
+      if (payResult.error !== "IYZICO_NOT_CONFIGURED") {
+        setBuyError(payResult.error ?? "Ödeme başlatılamadı. Lütfen tekrar deneyin.");
+        setLoading(false);
+        return; // keep modal open — error shown inside it
+      }
+
+      // iyzico not configured — fall back to direct order creation
+      const result = await createOrder({ boxId: box.id, quantity });
+      if (result.success) {
+        analytics.orderCreated(box.id, box.business?.name ?? "", total);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const order = result.data as any;
+        setShowConfirmModal(false);
+        setPickupCode(order.pickupCode);
+        setShowModal(true);
+      } else {
+        setBuyError(result.error ?? "Sipariş oluşturulamadı. Lütfen tekrar deneyin.");
+      }
+    } catch (err) {
+      console.error("[BoxDetailCheckout] handleBuy threw:", err);
+      setBuyError("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.");
+    } finally {
       setLoading(false);
-      setCheckoutFormContent(payResult.data.checkoutFormContent);
-      return;
-    }
-
-    if (payResult.error !== "IYZICO_NOT_CONFIGURED") {
-      setLoading(false);
-      setBuyError(payResult.error);
-      return;
-    }
-
-    const result = await createOrder({ boxId: box.id, quantity });
-    setLoading(false);
-    if (result.success) {
-      analytics.orderCreated(box.id, box.business?.name ?? "", total);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const order = result.data as any;
-      setPickupCode(order.pickupCode);
-      setShowModal(true);
-    } else {
-      setBuyError(result.error);
     }
   }
 
@@ -278,11 +283,6 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
             </div>
           )}
 
-          {buyError && (
-            <div className="rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
-              <p className="text-sm font-medium text-red-700">{buyError}</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -373,16 +373,24 @@ export default function BoxDetailCheckout({ box }: { box: SurpriseBox | null }) 
               </span>
             </label>
 
+            {/* Inline error (shown while modal is open) */}
+            {buyError && (
+              <div className="rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
+                <p className="text-sm font-medium text-red-700">{buyError}</p>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
               <button
-                onClick={() => { setShowConfirmModal(false); setAgreedToTerms(false); }}
-                className="flex-1 rounded-2xl border border-stone-200 py-3.5 text-sm font-semibold text-stone-600 hover:bg-stone-50 transition-colors"
+                onClick={() => { setShowConfirmModal(false); setAgreedToTerms(false); setBuyError(null); }}
+                disabled={loading}
+                className="flex-1 rounded-2xl border border-stone-200 py-3.5 text-sm font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50 transition-colors"
               >
                 Vazgeç
               </button>
               <button
-                onClick={async () => { setShowConfirmModal(false); await handleBuy(); }}
+                onClick={handleBuy}
                 disabled={!agreedToTerms || loading}
                 className="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-extrabold text-white hover:bg-emerald-700 active:scale-95 disabled:bg-stone-300 disabled:cursor-not-allowed transition-all"
               >

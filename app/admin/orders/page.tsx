@@ -9,8 +9,7 @@ const STATUS_BADGE: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 const BOX_LABEL: Record<string, string> = {
-  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
-  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+  BAKERY: "Fırın", PATISSERIE: "Pastane", CAFE: "Kafe",
 };
 
 export default async function AdminOrdersPage({

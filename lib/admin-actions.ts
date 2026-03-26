@@ -84,22 +84,26 @@ export async function refreshBetaBoxes(): Promise<ActionResult> {
     const now = Date.now();
     const h = (n: number) => new Date(now + n * 3_600_000);
 
-    // Business category → box category mapping
+    // Business category → box category mapping (only 3 supported for launch)
     const CAT_MAP: Record<string, string> = {
-      BAKERY: "BAKERY", CAFE: "CAFE", RESTAURANT: "PREPARED_MEAL",
-      GROCERY: "GROCERY", GREENGROCER: "PRODUCE", PATISSERIE: "MIXED",
-      DELI: "DELI", MARKET: "GROCERY", FLORIST: "MIXED", OTHER: "MIXED",
+      BAKERY:     "BAKERY",
+      PATISSERIE: "PATISSERIE",
+      CAFE:       "CAFE",
+      // Fallbacks for legacy business categories
+      RESTAURANT: "CAFE", GROCERY: "BAKERY", GREENGROCER: "BAKERY",
+      MARKET: "BAKERY", DELI: "BAKERY", FLORIST: "BAKERY", OTHER: "BAKERY",
     };
 
-    // Default prices per box category
+    // Default prices per box category (original, discounted)
     const PRICES: Record<string, [number, number]> = {
-      BAKERY: [100, 42], CAFE: [80, 34], PREPARED_MEAL: [120, 50],
-      GROCERY: [95, 40], PRODUCE: [70, 29], MIXED: [90, 38], DELI: [110, 45],
+      BAKERY:     [180, 70],
+      PATISSERIE: [250, 100],
+      CAFE:       [150, 60],
     };
 
     for (const biz of businesses) {
-      const boxCat = CAT_MAP[biz.category] ?? "MIXED";
-      const [orig, disc] = PRICES[boxCat] ?? [90, 38];
+      const boxCat = CAT_MAP[biz.category] ?? "BAKERY";
+      const [orig, disc] = PRICES[boxCat] ?? [180, 70];
 
       await prisma.surpriseBox.createMany({
         data: [

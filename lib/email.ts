@@ -75,8 +75,7 @@ function fmtTime(iso: string) {
 }
 
 const BOX_LABELS: Record<string, string> = {
-  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
-  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+  BAKERY: "Fırın", PATISSERIE: "Pastane", CAFE: "Kafe",
 };
 
 /** Wraps content in the branded FoodRescue email shell. */

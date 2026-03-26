@@ -30,13 +30,8 @@ enum BusinessCategory {
 
 enum BoxCategory {
   BAKERY
-  SUSHI
-  GROCERY
-  DELI
+  PATISSERIE
   CAFE
-  PREPARED_MEAL
-  PRODUCE
-  MIXED
 }
 
 enum OrderStatus {

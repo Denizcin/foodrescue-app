@@ -3,14 +3,9 @@ import type { BoxCategory, BusinessCategory } from "@/lib/types";
 type CategoryInfo = { emoji: string; label: string };
 
 const BOX_MAP: Record<BoxCategory, CategoryInfo> = {
-  BAKERY:        { emoji: "🥐", label: "Fırın" },
-  SUSHI:         { emoji: "🍣", label: "Suşi" },
-  GROCERY:       { emoji: "🛒", label: "Market" },
-  DELI:          { emoji: "🥩", label: "Şarküteri" },
-  CAFE:          { emoji: "☕", label: "Kafe" },
-  PREPARED_MEAL: { emoji: "🍱", label: "Hazır Yemek" },
-  PRODUCE:       { emoji: "🥕", label: "Manav" },
-  MIXED:         { emoji: "🎁", label: "Karışık" },
+  BAKERY:     { emoji: "🥐", label: "Fırın" },
+  PATISSERIE: { emoji: "🎂", label: "Pastane" },
+  CAFE:       { emoji: "☕", label: "Kafe" },
 };
 
 const BIZ_MAP: Record<BusinessCategory, CategoryInfo> = {

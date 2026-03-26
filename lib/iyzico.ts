@@ -88,6 +88,7 @@ const iyzico: IyzicoClient | null =
               currency: request.currency,
               basketId: request.basketId,
               paymentGroup: request.paymentGroup,
+              force3ds: 0,
               callbackUrl: request.callbackUrl,
               buyer: request.buyer,
               shippingAddress: request.shippingAddress,

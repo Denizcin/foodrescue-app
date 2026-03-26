@@ -6,13 +6,8 @@ export type OrderStatus = "PENDING" | "PICKED_UP" | "CANCELLED";
 
 export type BoxCategory =
   | "BAKERY"
-  | "SUSHI"
-  | "GROCERY"
-  | "DELI"
-  | "CAFE"
-  | "PREPARED_MEAL"
-  | "PRODUCE"
-  | "MIXED";
+  | "PATISSERIE"
+  | "CAFE";
 
 export type BusinessCategory =
   | "BAKERY"

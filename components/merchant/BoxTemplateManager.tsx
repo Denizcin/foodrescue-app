@@ -4,8 +4,7 @@ import { useState, useTransition } from "react";
 import { createBoxTemplate, deleteBoxTemplate } from "@/lib/profile-actions";
 
 const BOX_LABELS: Record<string, string> = {
-  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
-  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+  BAKERY: "Fırın", PATISSERIE: "Pastane", CAFE: "Kafe",
 };
 
 const CATEGORIES = Object.entries(BOX_LABELS);

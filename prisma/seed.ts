@@ -26,7 +26,9 @@ async function main() {
   // ── Wipe existing data ─────────────────────────────────────────────────────
   await prisma.order.deleteMany();
   await prisma.businessNomination.deleteMany();
+  await prisma.boxTemplate.deleteMany();
   await prisma.surpriseBox.deleteMany();
+  await prisma.favorite.deleteMany();
   await prisma.business.deleteMany();
   await prisma.passwordResetToken.deleteMany();
   await prisma.verificationToken.deleteMany();
@@ -35,11 +37,10 @@ async function main() {
   await prisma.user.deleteMany();
 
   // ── Users ──────────────────────────────────────────────────────────────────
-  const [adminPw, m1Pw, m2Pw, m3Pw, consumerPw] = await Promise.all([
+  const [adminPw, m1Pw, m2Pw, consumerPw] = await Promise.all([
     bcrypt.hash("admin123",    12),
     bcrypt.hash("merchant123", 12),
-    bcrypt.hash("kafe456",     12),
-    bcrypt.hash("market789",   12),
+    bcrypt.hash("pastane456",  12),
     bcrypt.hash("consumer123", 12),
   ]);
 
@@ -52,7 +53,7 @@ async function main() {
     },
   });
 
-  // Merchant 1 — owns Bakery + Deli
+  // Merchant 1 — owns both bakeries
   const m1 = await prisma.user.create({
     data: {
       name: "Kadir Yılmaz",
@@ -63,25 +64,14 @@ async function main() {
     },
   });
 
-  // Merchant 2 — owns Cafe
+  // Merchant 2 — owns pastane + kafe
   const m2 = await prisma.user.create({
     data: {
       name: "Fatma Şahin",
-      email: "kafe@foodrescue.com",
+      email: "pastane@foodrescue.com",
       passwordHash: m2Pw,
       role: "MERCHANT",
       phone: "+90 533 444 55 66",
-    },
-  });
-
-  // Merchant 3 — owns Greengrocer + Grocery
-  const m3 = await prisma.user.create({
-    data: {
-      name: "Ömer Demir",
-      email: "market@foodrescue.com",
-      passwordHash: m3Pw,
-      role: "MERCHANT",
-      phone: "+90 535 777 88 99",
     },
   });
 
@@ -103,46 +93,62 @@ async function main() {
 
   // ── Businesses ─────────────────────────────────────────────────────────────
   // All pre-approved so they appear in the consumer feed immediately.
-  // Coordinates are real Istanbul neighbourhoods (verified on OSM).
+  // Coordinates are real Istanbul neighbourhoods.
 
-  const bakery = await prisma.business.create({
+  const bakery1 = await prisma.business.create({
     data: {
       ownerId: m1.id,
-      name: "Pazar Fırını",
+      name: "Kadıköy Ekmek Fırını",
       category: "BAKERY",
-      description: "1978'den beri Kadıköy'de taze ekmek, simit ve unlu mamüller. Günlük yapım, katkısız.",
-      address: "Bahariye Caddesi No:12, Kadıköy, İstanbul",
-      locationLat: 40.9905,
-      locationLng: 29.0303,
-      operatingHours: "Pzt-Cmt 06:00-20:00, Paz 07:00-18:00",
+      description: "1975'ten beri Kadıköy'de günlük taze ekmek, simit ve poğaça. Sabah 6'da açılır, taze ürünler biter bitmez kapanır.",
+      address: "Moda Caddesi No:47, Kadıköy, İstanbul",
+      locationLat: 40.9874,
+      locationLng: 29.0278,
+      operatingHours: "Pzt-Cmt 06:00-19:00, Paz 07:00-17:00",
       phone: "+90 216 418 11 22",
       isActive: true,
       isApproved: true,
     },
   });
 
-  const deli = await prisma.business.create({
+  const bakery2 = await prisma.business.create({
     data: {
       ownerId: m1.id,
-      name: "Beşiktaş Börekcisi",
-      category: "DELI",
-      description: "El açması börekler, çeşit çeşit peynirler ve şarküteri ürünleri.",
-      address: "Barbaros Bulvarı No:34, Beşiktaş, İstanbul",
-      locationLat: 41.0430,
-      locationLng: 29.0077,
-      operatingHours: "Her gün 07:30-21:00",
+      name: "Beşiktaş Fırını",
+      category: "BAKERY",
+      description: "Çarşı'nın kalbinde, el yapımı börekler ve fırın ekmeği. Günde 3 kez pişirim.",
+      address: "Sinanpaşa Mah. Beşiktaş Caddesi No:12, Beşiktaş, İstanbul",
+      locationLat: 41.0438,
+      locationLng: 29.0042,
+      operatingHours: "Her gün 06:30-20:00",
       phone: "+90 212 260 33 44",
       isActive: true,
       isApproved: true,
     },
   });
 
-  const cafe = await prisma.business.create({
+  const pastane = await prisma.business.create({
+    data: {
+      ownerId: m2.id,
+      name: "İnci Pastanesi",
+      category: "PATISSERIE",
+      description: "Şişli'nin köklü pastanesi. Profiterol, pasta dilimleri ve ev yapımı kurabiyeler.",
+      address: "Halaskargazi Caddesi No:35, Şişli, İstanbul",
+      locationLat: 41.0618,
+      locationLng: 28.9871,
+      operatingHours: "Her gün 08:00-22:00",
+      phone: "+90 212 247 77 88",
+      isActive: true,
+      isApproved: true,
+    },
+  });
+
+  const kafe = await prisma.business.create({
     data: {
       ownerId: m2.id,
       name: "Galata Kafe",
       category: "CAFE",
-      description: "Galata Kulesi'nin gölgesinde özel kavurma kahveler, ev yapımı kekler ve sandviçler.",
+      description: "Galata Kulesi'nin gölgesinde özel kavurma kahveler, ev yapımı kekler ve sandviçler. Kapanışta her gün fazla ürün kalıyor.",
       address: "Galata Kulesi Sokak No:7, Beyoğlu, İstanbul",
       locationLat: 41.0256,
       locationLng: 28.9742,
@@ -153,295 +159,200 @@ async function main() {
     },
   });
 
-  const greengrocer = await prisma.business.create({
-    data: {
-      ownerId: m3.id,
-      name: "Şişli Taze Manav",
-      category: "GREENGROCER",
-      description: "Çiftlikten direkt taze meyve ve sebzeler. Mevsiminde, pestisitsiz.",
-      address: "Halaskargazi Caddesi No:22, Şişli, İstanbul",
-      locationLat: 41.0618,
-      locationLng: 28.9871,
-      operatingHours: "Pzt-Cmt 07:00-21:00, Paz 08:00-19:00",
-      phone: "+90 212 247 77 88",
-      isActive: true,
-      isApproved: true,
-    },
-  });
-
-  const grocery = await prisma.business.create({
-    data: {
-      ownerId: m3.id,
-      name: "Üsküdar Mahalle Market",
-      category: "GROCERY",
-      description: "Organik ürünler, yerel lezzetler ve günlük ihtiyaçlar.",
-      address: "Mimar Sinan Caddesi No:8, Üsküdar, İstanbul",
-      locationLat: 41.0232,
-      locationLng: 29.0152,
-      operatingHours: "Her gün 08:00-22:00",
-      phone: "+90 216 333 99 00",
-      isActive: true,
-      isApproved: true,
-    },
-  });
-
-  console.log("✅ Businesses created");
+  console.log("✅ Businesses created (2 fırın, 1 pastane, 1 kafe)");
 
   // ── Surprise Boxes ─────────────────────────────────────────────────────────
-  // Three pickup windows:
-  //   Slot A — today, ~2-4 hours from now (current day, early slot)
-  //   Slot B — today, ~5-7 hours from now (current day, later slot)
-  //   Slot C — tomorrow, ~20-22 hours from now
-  const [aStart, aEnd] = [hoursFromNow(2),  hoursFromNow(4)];
-  const [bStart, bEnd] = [hoursFromNow(5),  hoursFromNow(7)];
-  const [cStart, cEnd] = [hoursFromNow(20), hoursFromNow(22)];
+  // Three pickup windows today + one tomorrow:
+  //   Slot A — 2-4 h from now   (current day, afternoon)
+  //   Slot B — 5-7 h from now   (current day, evening)
+  //   Slot C — 20-22 h from now  (next morning)
+  const [aS, aE] = [hoursFromNow(2),  hoursFromNow(4)];
+  const [bS, bE] = [hoursFromNow(5),  hoursFromNow(7)];
+  const [cS, cE] = [hoursFromNow(20), hoursFromNow(22)];
 
-  // Pazar Fırını — 3 boxes
-  const bakeryBox1 = await prisma.surpriseBox.create({
+  // ── Kadıköy Ekmek Fırını — 3 boxes ────────────────────────────────────────
+  const bakery1BoxA = await prisma.surpriseBox.create({
     data: {
-      businessId: bakery.id,
+      businessId: bakery1.id,
       category: "BAKERY",
-      description: "Günlük ekmek, poğaça ve çörek karışımı. Ne çıkacağı sürpriz!",
-      originalPrice: 120,
-      discountedPrice: 50,
+      description: "Günlük ekmek, poğaça ve simit karışımı. Sabah pişirimi, akşama kalan.",
+      originalPrice: 175,
+      discountedPrice: 70,
       stockQuantity: 6,
-      pickupTimeStart: aStart,
-      pickupTimeEnd: aEnd,
+      pickupTimeStart: aS,
+      pickupTimeEnd: aE,
       isActive: true,
     },
   });
 
   await prisma.surpriseBox.create({
     data: {
-      businessId: bakery.id,
-      category: "MIXED",
-      description: "Fırından karışık sürpriz kutu: tatlı-tuzlu unlu mamüller.",
-      originalPrice: 90,
-      discountedPrice: 38,
-      stockQuantity: 4,
-      pickupTimeStart: bStart,
-      pickupTimeEnd: bEnd,
-      isActive: true,
-    },
-  });
-
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: bakery.id,
+      businessId: bakery1.id,
       category: "BAKERY",
-      description: "Yarınki sepetin tazesi — sabah pişirilen yeni ekmekler.",
-      originalPrice: 80,
-      discountedPrice: 35,
-      stockQuantity: 8,
-      pickupTimeStart: cStart,
-      pickupTimeEnd: cEnd,
-      isActive: true,
-    },
-  });
-
-  // Beşiktaş Börekcisi — 2 boxes
-  const deliBox1 = await prisma.surpriseBox.create({
-    data: {
-      businessId: deli.id,
-      category: "DELI",
-      description: "Günün kalan el açması börekleri: peynirli, ıspanaklı, patatesli.",
-      originalPrice: 100,
-      discountedPrice: 42,
-      stockQuantity: 5,
-      pickupTimeStart: aStart,
-      pickupTimeEnd: aEnd,
-      isActive: true,
-    },
-  });
-
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: deli.id,
-      category: "DELI",
-      description: "Şarküteri ve peynir sürpriz kutusu — karışık seçki.",
-      originalPrice: 140,
+      description: "Akşam kapanış öncesi son ekmekler: francala, somun ve çavdar ekmeği.",
+      originalPrice: 150,
       discountedPrice: 60,
-      stockQuantity: 3,
-      pickupTimeStart: cStart,
-      pickupTimeEnd: cEnd,
-      isActive: true,
-    },
-  });
-
-  // Galata Kafe — 2 boxes
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: cafe.id,
-      category: "CAFE",
-      description: "Günün sandviçleri, tatlılar ve bir içecek. Akşam kapanış öncesi.",
-      originalPrice: 85,
-      discountedPrice: 36,
       stockQuantity: 4,
-      pickupTimeStart: bStart,
-      pickupTimeEnd: bEnd,
+      pickupTimeStart: bS,
+      pickupTimeEnd: bE,
       isActive: true,
     },
   });
 
   await prisma.surpriseBox.create({
     data: {
-      businessId: cafe.id,
-      category: "CAFE",
-      description: "Kahve dükkanı sürpriz kutusu: kek, kurabiye ve soğuk içecek.",
-      originalPrice: 70,
-      discountedPrice: 30,
-      stockQuantity: 6,
-      pickupTimeStart: cStart,
-      pickupTimeEnd: cEnd,
-      isActive: true,
-    },
-  });
-
-  // Şişli Taze Manav — 2 boxes
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: greengrocer.id,
-      category: "PRODUCE",
-      description: "Görünümü bozuk ama lezzetli mevsim meyveleri — 3 kg karışık.",
-      originalPrice: 75,
-      discountedPrice: 30,
-      stockQuantity: 10,
-      pickupTimeStart: aStart,
-      pickupTimeEnd: aEnd,
-      isActive: true,
-    },
-  });
-
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: greengrocer.id,
-      category: "PRODUCE",
-      description: "Taze sebze sepeti: domates, biber, kabak, patlıcan karışımı.",
-      originalPrice: 65,
-      discountedPrice: 28,
-      stockQuantity: 7,
-      pickupTimeStart: cStart,
-      pickupTimeEnd: cEnd,
-      isActive: true,
-    },
-  });
-
-  // Üsküdar Mahalle Market — 3 boxes
-  const groceryBox1 = await prisma.surpriseBox.create({
-    data: {
-      businessId: grocery.id,
-      category: "GROCERY",
-      description: "Son kullanma tarihi yaklaşan market ürünleri — çok çeşitli sürpriz.",
-      originalPrice: 110,
-      discountedPrice: 45,
-      stockQuantity: 5,
-      pickupTimeStart: aStart,
-      pickupTimeEnd: aEnd,
-      isActive: true,
-    },
-  });
-
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: grocery.id,
-      category: "GROCERY",
-      description: "Kahvaltılık sürpriz kutu: peynir, zeytin, reçel ve ekmek.",
-      originalPrice: 90,
-      discountedPrice: 38,
-      stockQuantity: 4,
-      pickupTimeStart: bStart,
-      pickupTimeEnd: bEnd,
-      isActive: true,
-    },
-  });
-
-  await prisma.surpriseBox.create({
-    data: {
-      businessId: grocery.id,
-      category: "GROCERY",
-      description: "Kuru gıda kutusu: bakliyat, makarna ve konserveler.",
-      originalPrice: 70,
-      discountedPrice: 29,
+      businessId: bakery1.id,
+      category: "BAKERY",
+      description: "Sabah erken teslim — dünden kalan taze unlu mamüller: tuzlu-tatlı karışık.",
+      originalPrice: 160,
+      discountedPrice: 65,
       stockQuantity: 8,
-      pickupTimeStart: cStart,
-      pickupTimeEnd: cEnd,
+      pickupTimeStart: cS,
+      pickupTimeEnd: cE,
       isActive: true,
     },
   });
 
-  console.log("✅ Surprise boxes created (12 boxes across 5 businesses)");
+  // ── Beşiktaş Fırını — 2 boxes ──────────────────────────────────────────────
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: bakery2.id,
+      category: "BAKERY",
+      description: "El açması börekler: peynirli, ıspanaklı, patatesli — günün kalan karışımı.",
+      originalPrice: 180,
+      discountedPrice: 72,
+      stockQuantity: 5,
+      pickupTimeStart: aS,
+      pickupTimeEnd: aE,
+      isActive: true,
+    },
+  });
+
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: bakery2.id,
+      category: "BAKERY",
+      description: "Akşam fırından çıkan son ekmekler ve poğaçalar — sıcak sıcak teslim.",
+      originalPrice: 165,
+      discountedPrice: 65,
+      stockQuantity: 3,
+      pickupTimeStart: bS,
+      pickupTimeEnd: bE,
+      isActive: true,
+    },
+  });
+
+  // ── İnci Pastanesi — 3 boxes ───────────────────────────────────────────────
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: pastane.id,
+      category: "PATISSERIE",
+      description: "Günün kalan pasta dilimleri ve kekler: çikolatalı, meyveli, sade — sürpriz.",
+      originalPrice: 260,
+      discountedPrice: 100,
+      stockQuantity: 5,
+      pickupTimeStart: aS,
+      pickupTimeEnd: aE,
+      isActive: true,
+    },
+  });
+
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: pastane.id,
+      category: "PATISSERIE",
+      description: "Kurabiye ve tatlı börek sürpriz kutusu: en az 6 çeşit tatlı.",
+      originalPrice: 220,
+      discountedPrice: 88,
+      stockQuantity: 4,
+      pickupTimeStart: bS,
+      pickupTimeEnd: bE,
+      isActive: true,
+    },
+  });
+
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: pastane.id,
+      category: "PATISSERIE",
+      description: "Profiterol, ekler ve çikolatalı tatlılardan oluşan akşam sürprizi.",
+      originalPrice: 290,
+      discountedPrice: 115,
+      stockQuantity: 3,
+      pickupTimeStart: cS,
+      pickupTimeEnd: cE,
+      isActive: true,
+    },
+  });
+
+  // ── Galata Kafe — 2 boxes ──────────────────────────────────────────────────
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: kafe.id,
+      category: "CAFE",
+      description: "Akşam kapanış öncesi sandviçler, kekler ve soğuk içecekler.",
+      originalPrice: 165,
+      discountedPrice: 65,
+      stockQuantity: 4,
+      pickupTimeStart: bS,
+      pickupTimeEnd: bE,
+      isActive: true,
+    },
+  });
+
+  await prisma.surpriseBox.create({
+    data: {
+      businessId: kafe.id,
+      category: "CAFE",
+      description: "Kahve dükkanı sabah sürprizi: croissant, muffin ve taze preslenmiş meyve suyu.",
+      originalPrice: 145,
+      discountedPrice: 58,
+      stockQuantity: 6,
+      pickupTimeStart: cS,
+      pickupTimeEnd: cE,
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Surprise boxes created (12 boxes across 4 businesses)");
 
   // ── Sample orders for consumer account ────────────────────────────────────
-  const order1 = await prisma.order.create({
+  const sampleOrder = await prisma.order.create({
     data: {
       userId: consumer.id,
-      boxId: bakeryBox1.id,
+      boxId: bakery1BoxA.id,
       status: "PENDING",
       pickupCode: "AX3K9F",
       quantity: 1,
-      totalPrice: bakeryBox1.discountedPrice,
-    },
-  });
-
-  await prisma.order.create({
-    data: {
-      userId: consumer.id,
-      boxId: deliBox1.id,
-      status: "PICKED_UP",
-      pickupCode: "BM7T2R",
-      quantity: 1,
-      totalPrice: deliBox1.discountedPrice,
-    },
-  });
-
-  await prisma.order.create({
-    data: {
-      userId: consumer.id,
-      boxId: groceryBox1.id,
-      status: "CANCELLED",
-      pickupCode: "CP4W8N",
-      quantity: 1,
-      totalPrice: groceryBox1.discountedPrice,
+      totalPrice: bakery1BoxA.discountedPrice,
     },
   });
 
   // Deduct stock for the pending order
   await prisma.surpriseBox.update({
-    where: { id: bakeryBox1.id },
-    data: { stockQuantity: { decrement: order1.quantity } },
+    where: { id: bakery1BoxA.id },
+    data: { stockQuantity: { decrement: sampleOrder.quantity } },
   });
 
-  console.log("✅ Sample orders created");
+  console.log("✅ Sample order created");
 
-  // ── Nominations ────────────────────────────────────────────────────────────
+  // ── Nomination ─────────────────────────────────────────────────────────────
   await prisma.businessNomination.create({
     data: {
       userId: consumer.id,
       nominatorName: "Fatma Çelik",
       nominatorEmail: "fatma@example.com",
-      nominatedBusinessName: "Çiçek Pastanesi",
-      nominatedAddress: "Bağlarbaşı Caddesi No:8, Üsküdar, İstanbul",
-      reason: "Her akşam harika pasta ve kek kalıyor, çok yazık atılıyor",
+      nominatedBusinessName: "Boğaziçi Pastanesi",
+      nominatedAddress: "Bebek Caddesi No:8, Beşiktaş, İstanbul",
+      reason: "Her akşam harika pastalar kalıyor, çok yazık atılıyor",
     },
   });
-
-  await prisma.businessNomination.create({
-    data: {
-      nominatorName: "Ali Öztürk",
-      nominatedBusinessName: "Caddebostan Balık Evi",
-      nominatedAddress: "Caddebostan Sahili No:22, Kadıköy, İstanbul",
-      reason: "Günün balıkları her akşam atılıyor, platformda olsa çok satılır",
-    },
-  });
-
-  console.log("✅ Nominations created");
 
   console.log("\n🎉 Beta seed tamamlandı!");
   console.log("\nTest hesapları:");
   console.log("  Admin:       admin@foodrescue.com     / admin123");
-  console.log("  İşletme 1:   isletme@foodrescue.com   / merchant123  (Pazar Fırını + Beşiktaş Börekcisi)");
-  console.log("  İşletme 2:   kafe@foodrescue.com      / kafe456       (Galata Kafe)");
-  console.log("  İşletme 3:   market@foodrescue.com    / market789     (Manav + Market)");
+  console.log("  İşletme 1:   isletme@foodrescue.com   / merchant123  (Kadıköy Fırını + Beşiktaş Fırını)");
+  console.log("  İşletme 2:   pastane@foodrescue.com   / pastane456   (İnci Pastanesi + Galata Kafe)");
   console.log("  Tüketici:    tuketici@foodrescue.com  / consumer123");
   console.log("\nBeta sayfası: /beta");
 }

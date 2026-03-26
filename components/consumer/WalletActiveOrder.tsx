@@ -210,8 +210,7 @@ export default function WalletActiveOrder({
                   ? (box.originalPrice - box.discountedPrice) * order.quantity
                   : 0;
                 const BOX_EMOJI: Record<string, string> = {
-                  BAKERY: "🥐", SUSHI: "🍣", GROCERY: "🛒", DELI: "🥩",
-                  CAFE: "☕", PREPARED_MEAL: "🍱", PRODUCE: "🥕", MIXED: "🎁",
+                  BAKERY: "🥐", PATISSERIE: "🎂", CAFE: "☕",
                 };
                 const boxEmoji = box ? (BOX_EMOJI[box.category] ?? "🎁") : "🎁";
                 const steps = [

@@ -10,8 +10,7 @@ export const metadata: Metadata = {
 };
 
 const BOX_LABELS: Record<string, string> = {
-  BAKERY: "Fırın", SUSHI: "Suşi", GROCERY: "Market", DELI: "Şarküteri",
-  CAFE: "Kafe", PREPARED_MEAL: "Hazır Yemek", PRODUCE: "Manav", MIXED: "Karışık",
+  BAKERY: "Fırın", PATISSERIE: "Pastane", CAFE: "Kafe",
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
